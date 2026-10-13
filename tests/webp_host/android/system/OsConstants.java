@@ -1,0 +1,1 @@
+package android.system;public final class OsConstants {public static final int SEEK_CUR=1,SEEK_SET=0,F_GETFL=3,O_APPEND=1024,EINTR=4;}

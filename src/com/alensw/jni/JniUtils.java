@@ -26,7 +26,8 @@ import java.util.Map;
 
 /** Java replacement for qpicjni156. Handles are positive registry IDs, never pointers.
  * Android API 21 is the minimum. Storage access still follows Android permissions.
- * GIF pixels/disposal are decoded by Android Movie; no native library is loaded.
+ * GIF pixels/disposal use Android Movie; WebP uses BitmapFactory and Canvas.
+ * No native library is loaded.
  */
 public class JniUtils {
     private static final Map<Integer, Scanner> SCANNERS = new HashMap<Integer, Scanner>();
@@ -243,9 +244,21 @@ public class JniUtils {
     private static final class Gif {
         final Movie movie;
         final GifMetadata metadata;
+        final WebPAnimation webp;
+        final int width, height, duration;
+        final int[] delays, starts;
         int background;
         boolean closed;
-        Gif(Movie movie, GifMetadata metadata) { this.movie = movie; this.metadata = metadata; }
+        Gif(Movie movie, GifMetadata metadata) {
+            this.movie = movie; this.metadata = metadata; webp = null;
+            width = metadata.width; height = metadata.height; duration = metadata.duration;
+            delays = metadata.delays; starts = metadata.starts;
+        }
+        Gif(WebPAnimation webp) {
+            movie = null; metadata = null; this.webp = webp;
+            width = webp.width; height = webp.height; duration = webp.duration;
+            delays = webp.delays; starts = webp.starts;
+        }
     }
     private static final class GifBuffer {
         final int pixels;
@@ -270,11 +283,29 @@ public class JniUtils {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             byte[] chunk = new byte[16 * 1024];
             int length;
+            boolean checkedHeader = false;
             while ((length = input.read(chunk)) != -1) {
                 if (output.size() > MAX_GIF_BYTES - length) return 0;
                 output.write(chunk, 0, length);
+                if (!checkedHeader && output.size() >= 30) {
+                    checkedHeader = true;
+                    byte[] prefix = output.toByteArray();
+                    // Static WebP uses the existing bitmap path. Only an animation
+                    // flag warrants retaining/validating the entire RIFF container.
+                    if (WebPAnimation.isWebP(prefix) && !WebPAnimation.hasAnimationFlag(prefix)) return 0;
+                }
             }
             byte[] data = output.toByteArray();
+            if (WebPAnimation.isWebP(data)) {
+                WebPAnimation webp = WebPAnimation.parse(data);
+                // Static and single-frame containers stay on the BitmapFactory path.
+                // No animation handle is registered for the static fallback.
+                if (webp.frames.length < 2) { webp.close(); return 0; }
+                int id = token();
+                if (id != 0) synchronized (GIFS) { GIFS.put(id, new Gif(webp)); }
+                else webp.close();
+                return id;
+            }
             GifMetadata metadata = GifMetadata.parse(data);
             data = metadata.movieData(data);
             Movie movie = Movie.decodeByteArray(data, 0, data.length);
@@ -296,13 +327,27 @@ public class JniUtils {
     public static void gifClose(int handle) {
         Gif gif;
         synchronized (GIFS) { gif = GIFS.remove(handle); }
-        if (gif != null) synchronized (gif) { gif.closed = true; }
+        if (gif != null) synchronized (gif) { gif.closed = true; if (gif.webp != null) gif.webp.close(); }
         // Release decoded bitmaps even if the original UI's exception path omitted freeBuffer.
+        releaseBuffers(handle);
+    }
+    private static void releaseBuffers(int handle) {
+        // Called only after releasing decoder/handle locks. Cleanup allocates no
+        // arrays, so it also works after an OutOfMemoryError while decoding.
         synchronized (BUFFERS) {
             for (GifBuffer buffer : BUFFERS.values()) synchronized (buffer) {
                 if (buffer.gif == handle) release(buffer);
             }
         }
+    }
+    private static boolean decodeFailed(int handle, Gif gif, GifBuffer buffer) {
+        release(buffer);
+        if (gif.webp != null) {
+            gif.closed = true; gif.webp.close();
+            synchronized (GIFS) { GIFS.remove(handle); }
+            return true;
+        }
+        return false;
     }
     public static int gifAllocBuffer(int pixels) {
         if (pixels <= 0 || pixels > MAX_GIF_PIXELS) return 0;
@@ -320,43 +365,64 @@ public class JniUtils {
         buffer.bitmap = null; buffer.gif = 0; buffer.frame = -1;
     }
     public static int gifGetDuration(int handle) {
-        Gif gif = gif(handle); return gif == null ? 0 : gif.metadata.duration;
+        Gif gif = gif(handle); return gif == null ? 0 : gif.duration;
     }
     public static int gifGetFrameCount(int handle) {
-        Gif gif = gif(handle); return gif == null ? 0 : gif.metadata.delays.length;
+        Gif gif = gif(handle); return gif == null ? 0 : gif.delays.length;
     }
     public static int gifGetImageHeight(int handle) {
-        Gif gif = gif(handle); return gif == null ? 0 : gif.metadata.height;
+        Gif gif = gif(handle); return gif == null ? 0 : gif.height;
     }
     public static int gifGetImageWidth(int handle) {
-        Gif gif = gif(handle); return gif == null ? 0 : gif.metadata.width;
+        Gif gif = gif(handle); return gif == null ? 0 : gif.width;
+    }
+    /** True only for a live animated WebP handle. GIF scheduling remains unchanged. */
+    public static boolean gifIsAnimatedWebP(int handle) {
+        Gif gif = gif(handle);
+        if (gif == null) return false;
+        synchronized (gif) { return !gif.closed && gif.webp != null; }
+    }
+    /** WebP ANIM total iteration count; zero means infinite. Legacy GIF returns zero. */
+    public static int gifGetLoopCount(int handle) {
+        Gif gif = gif(handle);
+        if (gif == null) return 0;
+        synchronized (gif) { return !gif.closed && gif.webp != null ? gif.webp.loopCount : 0; }
     }
     public static void gifSetBkColor(int handle, int color) {
         Gif gif = gif(handle); if (gif != null) synchronized (gif) { gif.background = color; }
     }
     public static int gifDecodeFrame(int handle, int frame, int bufferHandle) {
         Gif gif = gif(handle); GifBuffer buffer = buffer(bufferHandle);
-        if (gif == null || buffer == null || frame < 0 || frame >= gif.metadata.delays.length) return 0;
+        if (gif == null || buffer == null || frame < 0 || frame >= gif.delays.length) return 0;
+        int result = 0;
+        boolean failedWebP = false;
         synchronized (gif) { synchronized (buffer) {
-            if (gif.closed || buffer.closed || buffer.pixels < gif.metadata.width * gif.metadata.height) return 0;
+            if (gif.closed || buffer.closed || buffer.pixels < gif.width * gif.height) return 0;
             try {
-                if (buffer.bitmap == null || buffer.bitmap.getWidth() != gif.metadata.width
-                        || buffer.bitmap.getHeight() != gif.metadata.height) {
+                if (buffer.bitmap == null || buffer.bitmap.getWidth() != gif.width
+                        || buffer.bitmap.getHeight() != gif.height) {
                     release(buffer);
-                    buffer.bitmap = Bitmap.createBitmap(gif.metadata.width, gif.metadata.height, Bitmap.Config.ARGB_8888);
+                    buffer.bitmap = Bitmap.createBitmap(gif.width, gif.height, Bitmap.Config.ARGB_8888);
                 }
                 Canvas canvas = new Canvas(buffer.bitmap);
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                // Movie composites frame disposal itself, including resetting at loop start.
-                // AOSP Movie chooses the first cumulative end >= time; sample inside
-                // the requested interval, not exactly on the preceding frame's end.
-                gif.movie.setTime(gif.metadata.starts[frame] + 1);
-                gif.movie.draw(canvas, 0, 0);
+                if (gif.webp != null) canvas.drawBitmap(gif.webp.render(frame), 0, 0, null);
+                else {
+                    // Movie owns GIF disposal/reset. Sample inside the authored interval:
+                    // AOSP Movie chooses the first cumulative end >= the requested time.
+                    gif.movie.setTime(gif.starts[frame] + 1);
+                    gif.movie.draw(canvas, 0, 0);
+                }
                 buffer.gif = handle; buffer.frame = frame;
-                return gif.metadata.delays[frame];
-            } catch (RuntimeException e) { release(buffer); return 0; }
-            catch (OutOfMemoryError e) { release(buffer); return 0; }
+                result = gif.delays[frame];
+            } catch (IOException e) { failedWebP = decodeFailed(handle, gif, buffer); }
+            catch (RuntimeException e) { failedWebP = decodeFailed(handle, gif, buffer); }
+            catch (OutOfMemoryError e) { failedWebP = decodeFailed(handle, gif, buffer); }
         } }
+        // Avoid the buffer -> registry lock order while another close holds registry
+        // -> buffer. Other snapshots are released before reporting the codec failure.
+        if (failedWebP) releaseBuffers(handle);
+        return result;
     }
     public static boolean gifDrawFrame(int handle, int frame, int bufferHandle, Bitmap destination) {
         Gif gif = gif(handle); GifBuffer buffer = buffer(bufferHandle);
@@ -374,7 +440,7 @@ public class JniUtils {
         if (gif == null || buffer == null || pixels == null || sampleSize <= 0) return false;
         synchronized (gif) { synchronized (buffer) {
             if (!drawable(gif, buffer, handle, frame)) return false;
-            int width = gif.metadata.width / sampleSize, height = gif.metadata.height / sampleSize;
+            int width = gif.width / sampleSize, height = gif.height / sampleSize;
             if (width <= 0 || height <= 0 || (long) width * height > pixels.length) return false;
             Bitmap destination = null;
             try {

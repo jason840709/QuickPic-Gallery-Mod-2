@@ -1,8 +1,14 @@
-# 快圖 11.0.0 · QuickPic Gallery Mod 2
+# 快圖 11.0.1 · QuickPic Gallery Mod 2
 
 [繁體中文](README.md)
 
 QuickPic Gallery Mod 2 is an Android gallery maintained by Jason Chen. It builds on a derivative of WSTxda's QuickPic Gallery Mod, adding compatibility repairs for modern Android, viewer controls, and a fallback for opening screensaver images. Its installed app name is **快圖**. This version also retains Jason Chen's earlier E-Ink optimizations for an e-reader.
+
+## Animated WebP in 11.0.1
+
+11.0.1 detects animation from WebP contents and plays it automatically, preserving ordinary frame durations, partial-frame composition, transparency and total loop counts. Durations of 0–10 ms use 100 ms; static WebP remains a still image.
+
+This version is currently a local test candidate. Host and packaged-code checks passed; Android playback still awaits user testing. The latest public stable release remains 11.0.0.
 
 ## Using the app
 

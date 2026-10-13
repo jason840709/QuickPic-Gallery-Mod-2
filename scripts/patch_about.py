@@ -127,7 +127,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod 2",
-        "version_number": "11.0.0",
+        "version_number": "11.0.1",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -142,7 +142,8 @@ def replacement_strings(path):
             "Screensaver PNG: XPhoto first, chooser if XPhoto cannot open it\\n"
             "Phone toolbar: delete and slideshow; sharing in the menu\\n"
             "Tablet toolbar adds an interval button; set seconds in the viewer\\n"
-            "App name: 快圖; screensaver folder: QuickPic-Screensaver"
+            "App name: 快圖; screensaver folder: QuickPic-Screensaver\\n\\n"
+            "Changes in 11.0.1\\nAnimated WebP is detected and played automatically; authored timing, blending and loop counts are preserved"
         ),
     }
     if chinese:
@@ -157,7 +158,8 @@ def replacement_strings(path):
                 "螢幕保護 PNG 優先以 XPhoto 開啟；無法開啟時可選其他 App\\n"
                 "手機工具列：垃圾桶、投影片；分享移到三點選單\\n"
                 "平板工具列另有「顯示間隔」；看圖片時可直接設定秒數\\n"
-                "App 名稱統一為「快圖」；輸出資料夾為 QuickPic-Screensaver"
+                "App 名稱統一為「快圖」；輸出資料夾為 QuickPic-Screensaver\\n\\n"
+                "11.0.1 更新\\n自動辨識並播放動畫 WebP，依原始幀時長、透明混合與循環次數播放"
             ),
         })
         if simplified:
@@ -172,7 +174,8 @@ def replacement_strings(path):
                     "屏保 PNG 优先用 XPhoto 打开；无法打开时可选其他 App\\n"
                     "手机工具栏：垃圾桶、幻灯片；分享移到三点菜单\\n"
                     "平板工具栏另有显示间隔；看图片时可直接设置秒数\\n"
-                    "App 名称统一为快圖；输出文件夹为 QuickPic-Screensaver"
+                    "App 名称统一为快圖；输出文件夹为 QuickPic-Screensaver\\n\\n"
+                    "11.0.1 更新\\n自动识别并播放动画 WebP，按原始帧时长、透明混合和循环次数播放"
                 ),
             })
     strings.update({key: "" for key in RETIRED_STRINGS})

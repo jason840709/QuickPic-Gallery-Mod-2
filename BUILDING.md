@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.0.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.1.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.0`，版本代碼為 `11000003`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.1`，版本代碼為 `11001002`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -82,6 +82,16 @@ python3 scripts/build.py \
 D8 把 Java 編譯結果轉成 Android 的 DEX 格式；Apktool 再把新增程式轉成可合併的 smali 文字。修補腳本依已核對的基底 APK 方法與資源結構工作，遇到結構不符會停止。
 
 ## 主機測試
+
+WebP 測試另需 Pillow 12 或更新版本（含 WebP codec），不使用使用者的私人圖片。新增時間軸與 WebP 檢查：
+
+```sh
+python3 tests/webp_host/run.py
+python3 tests/animation_clock_host/run.py
+```
+
+載入路徑測試 `tests/animation_route_host/run.py` 的 `--loader-java` 需另行提供由指定 APK 反編譯的 `com/alensw/a/at.java`；原 App 方法不放在來源倉庫內。
+
 
 以下測試只使用合成資料，不需要 APK、簽署金鑰或裝置：
 

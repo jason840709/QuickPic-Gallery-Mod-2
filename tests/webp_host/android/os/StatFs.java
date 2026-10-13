@@ -1,0 +1,1 @@
+package android.os;public final class StatFs {public StatFs(String s){}public long getAvailableBytes(){return 0;} }

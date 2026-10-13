@@ -1,8 +1,14 @@
-# 快圖 11.0.0 · QuickPic Gallery Mod 2
+# 快圖 11.0.1 · QuickPic Gallery Mod 2
 
 [English](README.en.md)
 
 快圖是一款 Android 圖片瀏覽 App。QuickPic Gallery Mod 2 由 Jason Chen 維護，在 WSTxda 的 QuickPic Gallery Mod 衍生版本上修補新版 Android 相容性，並調整圖片檢視工具列與螢幕保護圖片的開啟方式。安裝後顯示的 App 名稱為「快圖」。這個版本也延續 Jason Chen 先前為墨水屏閱讀器製作的 E-Ink 優化。
+
+## 11.0.1 動畫 WebP
+
+11.0.1 會從 WebP 檔案內容辨識動畫並自動播放；靜態 WebP 沿用圖片顯示方式。播放會處理每個畫面的停留時間、透明混合、局部畫面更新與循環次數。0～10 毫秒的畫面使用 100 毫秒停留時間，避免無延遲迴圈；一般停留時間照檔案記錄安排。
+
+本版目前為本機測試候選，已完成主機與 APK 程式路徑檢查，Android 實機播放等待使用者測試。GitHub 最新正式發行仍為 11.0.0。
 
 ## 怎麼用
 

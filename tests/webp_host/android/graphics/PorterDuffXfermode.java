@@ -1,0 +1,1 @@
+package android.graphics; public final class PorterDuffXfermode { public final PorterDuff.Mode mode; public PorterDuffXfermode(PorterDuff.Mode m){mode=m;} }

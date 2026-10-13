@@ -1,0 +1,1 @@
+package android.system;public class StructStat {public long st_dev,st_ino;}
