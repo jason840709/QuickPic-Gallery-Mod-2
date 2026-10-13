@@ -51,7 +51,7 @@ def hidden_method(app):
     iput-boolean v3, v0, Lcom/alensw/a/s;->b:Z
     sget-object v0, {app}->o:Lcom/alensw/a/x;
     const/4 v1, 0x0
-    invoke-virtual {{v0, v1}}, Lcom/alensw/a/x;->a(Z)V
+    invoke-virtual {{v0, v1}}, Lcom/alensw/a/x;->a(Z)Z
     :hidden_default_done
     return-void
 .end method
@@ -73,6 +73,9 @@ def patch(root):
             if member not in app_text:
                 raise ValueError('Unexpected QuickApp state: ' + member)
         app_text += hidden_method(app)
+    else:
+        # Replace our own helper so maintained bases also receive signature fixes.
+        app_text = replace_method(app_text, '.method public static applyHiddenDefault()V', lambda _: hidden_method(app).strip())
     def init_hook(part):
         if '->applyHiddenDefault()V' in part:
             return part

@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.2.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.3.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.2`，版本代碼為 `11002001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.3`，版本代碼為 `11003001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -115,3 +115,11 @@ XPhoto 測試使用假的 Android API 檢查 15 種開啟情境與 Intent 內容
 python3 tests/defaults_host/run.py --sources /path/to/jadx/sources --decoded /path/to/decoded --work-dir /path/to/private/defaults-test
 python3 tests/manual_open_host/run.py --sources /path/to/jadx/sources --work-dir /path/to/private/manual-test
 ```
+
+建置會在封裝前解析顯示隱藏項目啟動方法的本機成員引用，核對名稱、參數及回傳型別。Android／Java 系統 API 不在這項檢查範圍內。對最後 APK 另以 apktool 解碼後可重跑：
+
+```sh
+python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /path/to/private/startup-links.json
+```
+
+這項檢查能攔下11.0.2的錯誤呼叫；它不執行Android啟動。修改啟動流程後，正式APK仍須確認完整App能在Android啟動，不能以主機測試或JNI裝置檢查代替。

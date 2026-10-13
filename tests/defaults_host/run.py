@@ -12,9 +12,12 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from check_local_links import check_hidden_default
 A = '{http://schemas.android.com/apk/res/android}'
 
 
@@ -52,6 +55,12 @@ def main():
     if len(app_files) != 1:
         raise SystemExit('Expected one external QuickApp source')
     app_source = app_files[0].read_text()
+    try:
+        linkage = check_hidden_default(args.decoded)
+        check('exact DEX app member descriptors resolve', True)
+    except (ValueError, OSError) as error:
+        linkage = {'error': str(error)}
+        check('exact DEX app member descriptors resolve', False)
     app_pkg = re.search(r'package ([^;]+);', app_source).group(1)
     app_descriptor = 'L' + app_pkg.replace('.', '/') + '/QuickApp;'
     app_smali = (args.decoded / ('smali/' + app_pkg.replace('.', '/') + '/QuickApp.smali')).read_text()
@@ -104,7 +113,7 @@ public class DefaultsProbe {
     static int checks;
     static void eq(Object want,Object got,String title){checks++;if(!want.equals(got))throw new AssertionError(title+": expected "+want+" got "+got);}
     static final class Folder { boolean visible; int starts; void a(){starts++;} }
-    static final class Cache {int clears;void a(boolean ignored){clears++;} }
+    static final class Cache {int clears;boolean a(boolean ignored){clears++;return false;} }
     static final class Services {void c(){} }
     static final class QuickApp {
         static Object B=new Object();static Folder q=new Folder();static Cache o=new Cache();static Services r=new Services();static String y="";
@@ -175,7 +184,7 @@ public static class Prefs implements SharedPreferences{public boolean protectedH
         check('actual extracted startup/password/transition behavior', run.returncode == 0)
         none_run = subprocess.run(['java', '-cp', str(args.work_dir / 'classes'), 'DefaultsProbe', 'none'], capture_output=True, text=True)
         check('actual modern None dispatcher starts zero animations', none_run.returncode == 0)
-    report = {'checks': checks, 'failures': failures, 'passed': not failures,
+    report = {'linkage': linkage, 'checks': checks, 'failures': failures, 'passed': not failures,
               'host_output': run.stdout if run else '', 'host_error': run.stderr if run else compiled.stderr,
               'none_output': none_run.stdout if none_run else '', 'none_error': none_run.stderr if none_run else '',
               'scope': 'Decoded preference XML/control-flow plus actual JADX methods on host doubles; not Android UI playback',

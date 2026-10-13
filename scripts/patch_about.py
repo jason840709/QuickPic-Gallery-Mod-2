@@ -127,7 +127,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod 2",
-        "version_number": "11.0.2",
+        "version_number": "11.0.3",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -145,6 +145,7 @@ def replacement_strings(path):
             "App name: 快圖; screensaver folder: QuickPic-Screensaver\\n\\n"
             "Changes in 11.0.1\\nAnimated WebP is detected and played automatically; authored timing, blending and loop counts are preserved"
             "\\n\\nChanges in 11.0.2\\nShow hidden items on opening the app; existing password protection is retained\\nNew installations use no slideshow transition; existing choices are kept\\nFix the modern slideshow path applying a fade for None"
+            "\\n\\nChanges in 11.0.3\\nCorrect the startup cache method signature to prevent a startup crash"
         ),
     }
     if chinese:
@@ -162,6 +163,7 @@ def replacement_strings(path):
                 "App 名稱統一為「快圖」；輸出資料夾為 QuickPic-Screensaver\\n\\n"
                 "11.0.1 更新\\n自動辨識並播放動畫 WebP，依原始幀時長、透明混合與循環次數播放"
                 "\\n\\n11.0.2 更新\\n開啟 App 時預設顯示隱藏項目；保留既有密碼保護\\n首次安裝的投影片轉場預設為「無」，更新保留原有選擇\\n修正部分投影片介面在選「無」時仍套用淡入淡出的問題"
+                "\\n\\n11.0.3 更新\\n修正啟動時隱藏項目流程的內部方法簽名，避免啟動閃退"
             ),
         })
         if simplified:
@@ -179,6 +181,7 @@ def replacement_strings(path):
                     "App 名称统一为快圖；输出文件夹为 QuickPic-Screensaver\\n\\n"
                     "11.0.1 更新\\n自动识别并播放动画 WebP，按原始帧时长、透明混合和循环次数播放"
                     "\\n\\n11.0.2 更新\\n打开 App 时默认显示隐藏项目；保留已有密码保护\\n首次安装的幻灯片转场默认为无，更新保留原有选择\\n修正部分幻灯片界面在选择无时仍淡入淡出的问题"
+                    "\\n\\n11.0.3 更新\\n修正启动时隐藏项目流程的内部方法签名，避免启动闪退"
                 ),
             })
     strings.update({key: "" for key in RETIRED_STRINGS})

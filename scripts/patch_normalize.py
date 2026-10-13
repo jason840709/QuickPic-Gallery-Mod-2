@@ -22,7 +22,7 @@ def normalize_progress(root):
  if after!=before:path.write_bytes(after)
  return {'path':PROGRESS_PATH,'changed':after!=before}
 
-def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.2',version_code=11002001,app_name='快圖'):
+def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.3',version_code=11003001,app_name='快圖'):
  root=Path(decoded_root);manifest=root/'AndroidManifest.xml';old=ET.parse(manifest).getroot().get('package')
  if not old or not re.fullmatch(r'[a-zA-Z]\w*(?:\.[a-zA-Z]\w*)+',package):raise ValueError('Invalid package')
  replacements=[(old.replace('.','/'),package.replace('.','/')),(old,package),
