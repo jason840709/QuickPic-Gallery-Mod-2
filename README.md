@@ -1,0 +1,45 @@
+# 快圖 11.0.0 · QuickPic Gallery Mod 2
+
+[English](README.en.md)
+
+快圖是一款 Android 圖片瀏覽 App。QuickPic Gallery Mod 2 由 Jason Chen 維護，在 WSTxda 的 QuickPic Gallery Mod 衍生版本上修補新版 Android 相容性，並調整圖片檢視工具列與螢幕保護圖片的開啟方式。安裝後顯示的 App 名稱為「快圖」。這個版本也延續 Jason Chen 先前為墨水屏閱讀器製作的 E-Ink 優化。
+
+## 怎麼用
+
+從 [GitHub Releases](https://github.com/jason840709/QuickPic-Gallery-Mod-2/releases/latest) 下載 `QuickPic-Gallery-Mod-2-11.0.0.apk`，在手機或平板的檔案管理員中點選安裝。Android 如果詢問是否允許這個檔案管理員安裝 App，請依畫面完成設定。
+
+11.0.0 可與舊 Clone 版本共存；第一次開啟需重新設定偏好。開啟快圖並依系統提示授予照片或檔案存取權限。選擇資料夾後即可瀏覽圖片；轉場動畫的「無」選項、點擊上一張／下一張，以及設定資料夾路徑的功能都保留下來。
+
+圖片檢視畫面的手機工具列保留垃圾桶和投影片按鈕，分享移到選單。平板工具列另有「顯示間隔」按鈕；在圖片檢視畫面可開啟秒數浮窗，直接設定每張圖片停留的時間。
+
+使用螢幕保護功能時，快圖會產生 **1860 × 2480 像素的 PNG 圖片**，存到 `QuickPic-Screensaver` 資料夾。快圖先嘗試以 XPhoto 開啟圖片，XPhoto 無法開啟時改用系統的 App 選擇器。圖片開啟後，請在 XPhoto 或裝置的螢幕保護設定中完成指定。
+
+## 原有的 E-Ink 優化
+
+11.0.0 保留先前 E-Ink 優化版的四項功能，App「關於」中也保留完整的操作說明：
+
+- **無動畫翻頁**：保留轉場動畫中的「無」選項，供電子墨水螢幕看圖時選用。
+- **點擊翻頁**：點擊圖片下半部左側切換上一張，右側切換下一張，單手看圖時可直接點選。
+- **編輯資料夾路徑**：在包含或排除資料夾列表中，點路徑旁的筆圖示即可修改。路徑末尾不要加 `/`。
+- **設為螢幕保護**：在圖片的三點選單中選「設為」，再選螢幕保護功能。這項功能原本是為支援 XRZ 螢幕保護的墨水屏裝置設計。
+
+這四項功能來自先前的 E-Ink 優化版；11.0.0 接著補上新版 Android 相容性與操作上的調整。
+
+## 11.0.0 改了什麼
+
+- 把依賴舊 32 位元原生函式庫的功能改成 Java，讓僅支援 64 位元 App 的裝置也能安裝。
+- 手機工具列優先顯示垃圾桶與投影片；平板另顯示播放間隔，分享放入選單。
+- 在圖片檢視畫面直接設定投影片播放秒數。
+- XPhoto 無法開啟螢幕保護圖片時，提供其他 App 的開啟選擇。
+- 統一 App 名稱為「快圖」，套件名稱為 `io.github.jason840709.quickpic`，移除名稱中的 Clone 編號。
+- 關於頁面列出 Jason Chen、GitHub、貢獻者、上游來源與 FAQ。
+
+相容性修補與先前開發版已用 **64 位元手機** 經過安裝與操作測試；用 Java 取代的舊原生介面（JNI）也通過 38 項裝置檢查。檢查範圍與結果整理在 [驗證紀錄](VALIDATION.md)；11.0.0 發行檔的驗證結果列在 Release 說明。
+
+## 來源與參與方式
+
+這是獨立維護的衍生專案，上游為 [WSTxda／QP-Gallery-Releases](https://github.com/WSTxda/QP-Gallery-Releases)。完整歷史 App 原始碼目前無法取得；本倉庫提供本次新增的 Java 相容性程式、修補與建置腳本、主機測試及文件。建置時，以本專案 11.0.0 發行的 Android 安裝檔（APK）作為基底，再套用倉庫中的程式與修補。這些新增內容使用 MIT 授權；原始 App 與 APK 中的第三方內容另有授權範圍，詳見 [LICENSING.md](LICENSING.md)。
+
+使用問題請看 [FAQ](FAQ.md)。開發者可依 [BUILDING](BUILDING.md) 在本機建置；歷史署名整理在 [CONTRIBUTORS](CONTRIBUTORS.md)，版本記錄在 [CHANGELOG](CHANGELOG.md)。
+
+倉庫：[jason840709／QuickPic-Gallery-Mod-2](https://github.com/jason840709/QuickPic-Gallery-Mod-2)
