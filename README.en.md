@@ -2,60 +2,43 @@
 
 [繁體中文](README.md)
 
-QuickPic Gallery Mod 2 is an Android gallery maintained by Jason Chen. It builds on a derivative of WSTxda's QuickPic Gallery Mod, adding compatibility repairs for modern Android, viewer controls, and a fallback for opening screensaver images. Its installed app name is **快圖**. This version also retains Jason Chen's earlier E-Ink optimizations for an e-reader.
+QuickPic Gallery Mod 2 is an Android gallery maintained by Jason Chen. It builds on [WSTxda’s QuickPic Gallery Mod](https://github.com/WSTxda/QP-Gallery-Releases), adding viewing controls for e-readers, E-Ink screens and modern Android devices. It works on phones and tablets; its installed name is **快圖**.
 
-## Release status
+## Project features
 
-**11.0.2 has a known startup crash and is not recommended for installation.** The hidden-items startup path called an internal method using the wrong return descriptor. Initialization caught the error and exited. Its original APK is preserved and the release is marked as a prerelease.
+### E-readers and E-Ink screens
 
-The 11.0.3 repair candidate corrects that descriptor and adds exact app-owned method and field resolution checks for the hidden-items startup method. Packaged-code and host tests pass; Android startup still awaits confirmation, and no stable 11.0.3 APK has been published. The public stable release is currently 11.0.0.
+- Choose None for image transitions. New installations also default to no slideshow transition, reducing visual changes between images.
+- Tap the lower-left region for the previous image or the lower-right region for the next image.
+- Edit included and excluded folder paths directly to choose where the gallery looks for images.
+- Hidden items are shown by default when the app opens; existing password protection still applies.
 
-## Changes introduced in 11.0.2 and retained in the 11.0.3 candidate
+### Slideshows and display intervals
 
-Hidden items are shown when the app opens, including a return from the background. You can hide them during the current foreground session. Existing password protection still requires authentication.
+Start a slideshow directly from the viewer. The phone toolbar shows delete and play; tablets also provide an interval button. Sharing is in the three-dot menu.
 
-New installations default to None for slideshow transitions; updates keep the existing selection. A viewer path that still faded when None was selected has also been corrected. This setting controls transitions between images; animated WebP and GIF content still plays.
+New installations display each image for 3 seconds by default. The interval control opens a dialog with 3, 5, 10, 30 and 60 seconds, plus a custom value from 1 to 86400 seconds. It sets how long each image stays on screen. Slideshows use the current image list and offer sequential or shuffled playback.
 
-This release includes the animated WebP and direct-open repairs developed in 11.0.1. It detects animation from the file contents and handles transparency, partial-frame composition and loop counts. Frame durations of 0–10 ms use 100 ms; other durations follow the file. Static WebP remains a still image. Direct opening, manual navigation and slideshow loading try to load animated content; after stopping the slideshow, the current animation can continue according to its loop count.
+### Screensaver images
 
-Host logic, packaged-code paths and signing have been checked. Android startup of the 11.0.3 candidate still awaits confirmation; earlier device checks are described in [VALIDATION](VALIDATION.md).
+Open the image’s three-dot menu, choose Set as, then select the screensaver action. The app creates a **1860 × 2480 pixel PNG** in `QuickPic-Screensaver`.
 
-## Using the app
+The app first tries XPhoto. If XPhoto is unavailable or cannot open the image, you can choose another image app. Finish assigning the PNG as the device screensaver in XPhoto or your e-reader’s system settings.
 
-Download `QuickPic-Gallery-Mod-2-11.0.0.apk` from [GitHub Releases](https://github.com/jason840709/QuickPic-Gallery-Mod-2/releases/latest), then tap it in your phone or tablet's file manager. Follow Android's prompts to allow that file manager to install apps.
+### Modern Android and animated images
 
-Updates to the main package keep preferences. Older Clone packages remain separate apps and need their own setup. Grant photo or file access when Android requests it, then open a folder to browse images. The existing None option in transition settings, tap-to-go-to-previous/next controls, and editable folder paths remain available.
+The app supports devices that run only 64-bit apps. Animated WebP and GIF play automatically, while static WebP remains a still image. Turning off image transitions keeps animated-image playback available.
 
-The phone viewer toolbar shows delete and slideshow controls, with sharing in the menu. Tablets also show an interval control. A dialog in the viewer lets you enter the number of seconds each slide stays on screen.
+## Installation and use
 
-The screensaver feature generates a **1860 × 2480 pixel PNG** in `QuickPic-Screensaver`. It first tries XPhoto; if XPhoto cannot open the image, Android offers another app through its chooser. Finish assigning the screensaver in XPhoto or your device settings after opening the image.
+Download the stable APK from [GitHub Releases](https://github.com/jason840709/QuickPic-Gallery-Mod-2/releases/latest) and open it in your phone or tablet’s file manager. Grant image or file access when Android requests it, then choose a folder to browse.
 
-## Existing E-Ink optimizations
+Updates to the same app package keep preferences. Older clones use separate packages and need their own setup. Leave off the trailing `/` when editing a folder path.
 
-11.0.0 retains these four features from the earlier E-Ink version, with their operating instructions preserved on the About page:
+## Developer and sources
 
-- **No-animation navigation**: retain the None option in transition settings for E-Ink viewing.
-- **Tap navigation**: tap the lower-left region for the previous image or the lower-right region for the next image.
-- **Editable folder paths**: use the pencil beside a path in the include/exclude folder lists. Leave off the trailing `/`.
-- **Screensaver images**: open the image's three-dot menu, choose Set as, then choose the screensaver action. The feature was originally intended for E-Ink devices supporting XRZ screensavers.
+Developer: **Jason Chen**.
 
-The following changes were added in 11.0.0.
+The upstream project is [WSTxda / QP-Gallery-Releases](https://github.com/WSTxda/QP-Gallery-Releases). This repository provides newly written code, patches, build scripts and tests. The complete historical app source is unavailable. See [LICENSING](LICENSING.md) and [CONTRIBUTORS](CONTRIBUTORS.md) for licensing and credits.
 
-## Changes in 11.0.0
-
-- Replace functions that relied on an old 32-bit native library with Java, allowing installation on devices that support only 64-bit apps.
-- Put delete and slideshow on the phone toolbar, add the interval control on tablets, and move share to the menu.
-- Edit slideshow seconds directly in the viewer.
-- Offer another viewer when XPhoto cannot open a generated screensaver image.
-- Use one app name, 快圖, and package `io.github.jason840709.quickpic`, with no Clone number in the name.
-- Show Jason Chen, GitHub, contributors, upstream sources, and FAQ on the About page.
-
-The compatibility repair was installed and manually exercised on **a 64-bit phone**. Its Java replacements for the native interface (JNI) passed 38 device checks. Those checks cover the compatibility layer; see each Release's notes for validation of its final 11.0.0 APK.
-
-## Sources and contributions
-
-This is an independently maintained derivative of [WSTxda / QP-Gallery-Releases](https://github.com/WSTxda/QP-Gallery-Releases). The complete historical app source is unavailable. This repository contains newly written Java compatibility code, patch and build scripts, host tests, and documentation. To build, use this project's released 11.0.0 APK as the base and apply the repository's code and patches. The new contents use MIT, while the original app and third-party APK contents have separate licensing considerations described in [LICENSING.md](LICENSING.md).
-
-See [FAQ](FAQ.md) for usage, [BUILDING](BUILDING.md) for local builds, [CONTRIBUTORS](CONTRIBUTORS.md) for credits, and [CHANGELOG](CHANGELOG.md) for version history.
-
-Repository: [jason840709 / QuickPic-Gallery-Mod-2](https://github.com/jason840709/QuickPic-Gallery-Mod-2)
+See [FAQ](FAQ.md) for usage, [CHANGELOG](CHANGELOG.md) for releases, and [BUILDING](BUILDING.md) and [VALIDATION](VALIDATION.md) for development and testing.
