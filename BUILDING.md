@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.1.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.2.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.1`，版本代碼為 `11001002`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.2`，版本代碼為 `11002001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -74,6 +74,8 @@ python3 scripts/build.py \
 | `src/com/alensw/jni/ScreensaverOpener.java` | 依序嘗試 XPhoto 與系統圖片開啟選擇器 |
 | `scripts/patch_core.py` | 在 App 啟動時交給 EXIF 程式快取目錄，並插入 Android 開啟／分享請求（Intent）與回傳圖片的相容處理 |
 | `scripts/patch_viewer.py` | 在兩個圖片檢視控制器插入工具列及秒數浮窗呼叫，調整圖片選單 |
+| `scripts/patch_defaults.py` | 開啟或回到前景時恢復顯示隱藏項目，保留原密碼驗證；首次安裝預設無轉場 |
+| `scripts/patch_animation.py` | WebP 候選辨識、預覽升級與動畫排程呼叫 |
 | `scripts/patch_xphoto.py` | 只替換螢幕保護圖片的開啟方法，保留既有 PNG 產生程式 |
 | `scripts/patch_about.py` | 整理關於頁、貢獻者、GitHub 與 FAQ |
 | `scripts/patch_normalize.py` | 統一套件、App 名稱及版本，移除原生函式庫，更新輸出目錄與更新連結 |
@@ -104,3 +106,12 @@ python3 tests/xphoto_host/run.py
 XPhoto 測試使用假的 Android API 檢查 15 種開啟情境與 Intent 內容；EXIF 測試使用合成 JPEG、TIFF 中繼資料與非 JPEG 拒絕案例檢查讀寫行為。也可用 `python3 tests/xphoto_host/run.py --android-jar "$ANDROID_JAR"` 檢查圖片開啟程式與 Android API 的編譯相容性。
 
 主機測試完成後，仍需在實機檢查安裝、權限、資料夾瀏覽、圖片顯示、分享、播放間隔，以及 PNG 保存和開啟。實際 Android 權限與裝置廠商提供的圖片選擇器由裝置測試確認。
+
+每次交付修改過的 APK 都使用未交付的版本號。已交付候選可在檔案及 SHA-256 完全相同時轉為同版本正式發行；修改 APK 後必須升版。重新建置既有來源供本機檢查時，輸出另存，不替換歷史發行檔。
+
+預設值與手動開圖的實際方法測試需自備最終 APK 的 apktool decode 及 JADX sources；反編譯 App 程式不加入公開倉庫：
+
+```sh
+python3 tests/defaults_host/run.py --sources /path/to/jadx/sources --decoded /path/to/decoded --work-dir /path/to/private/defaults-test
+python3 tests/manual_open_host/run.py --sources /path/to/jadx/sources --work-dir /path/to/private/manual-test
+```
