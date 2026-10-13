@@ -1,8 +1,8 @@
-# 快圖 · QuickPic Gallery Mod 2
+# 快圖 · QuickPic Gallery Mod II
 
 [繁體中文](README.md)
 
-QuickPic Gallery Mod 2 is an Android gallery maintained by Jason Chen. It builds on [WSTxda’s QuickPic Gallery Mod](https://github.com/WSTxda/QP-Gallery-Releases), adding viewing controls for e-readers, E-Ink screens and modern Android devices. It works on phones and tablets; its installed name is **快圖**.
+QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It builds on [WSTxda’s QuickPic Gallery Mod](https://github.com/WSTxda/QP-Gallery-Releases), adding viewing controls for e-readers, E-Ink screens and modern Android devices. It works on phones and tablets; its installed name is **快圖**.
 
 ## Project features
 

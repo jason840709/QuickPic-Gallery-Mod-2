@@ -1,4 +1,4 @@
-# 快圖 · QuickPic Gallery Mod 2
+# 快圖 · QuickPic Gallery Mod II
 
 [English](README.en.md)
 

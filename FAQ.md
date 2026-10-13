@@ -1,8 +1,8 @@
 # 常見問題
 
-## 快圖與 QuickPic Gallery Mod 2 是同一個 App 嗎？
+## 快圖與 QuickPic Gallery Mod II 是同一個 App 嗎？
 
-是。「快圖」是安裝後顯示的名稱，QuickPic Gallery Mod 2 是 GitHub 專案名稱。目前快圖包含動畫 WebP 與預設值調整；11.0.2 已知啟動失敗，不建議安裝。歷史改動見 [CHANGELOG](CHANGELOG.md)。
+是。「快圖」是安裝後顯示的名稱，QuickPic Gallery Mod II 是 GitHub 專案名稱。目前快圖包含動畫 WebP 與預設值調整；11.0.2 已知啟動失敗，不建議安裝。歷史改動見 [CHANGELOG](CHANGELOG.md)。
 
 ## 原來的 E-Ink 優化還在嗎？
 
