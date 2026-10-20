@@ -123,3 +123,7 @@ python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /p
 ```
 
 這項檢查能攔下11.0.2的錯誤呼叫；它不執行Android啟動。修改啟動流程後，正式APK仍須確認完整App能在Android啟動，不能以主機測試或JNI裝置檢查代替。
+
+## 掃描與日期排序檢查
+
+執行 `python tests/media_dates_host/run.py` 與 `python tests/date_sort_host/run.py` 驗證日期索引和排序。掃描檢查使用 `python tests/scan_priority_host/run.py --decoded <最終APK的解碼目錄> --baseline-decoded <11.0.3解碼目錄> --work-dir <工作目錄> --output-json <報告>`，涵蓋實際控制流與佇列案例。主機 API 替身、DEX 成員核對及手機操作各自記錄；正式發布前仍須確認同一 APK 在 Android 正常啟動。

@@ -126,8 +126,8 @@ def replacement_strings(path):
     chinese = path.parent.name.startswith("values-zh")
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
-        "app_name_full": "QuickPic Gallery Mod 2",
-        "version_number": "11.0.3",
+        "app_name_full": "QuickPic Gallery Mod II",
+        "version_number": "11.0.4",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -184,6 +184,11 @@ def replacement_strings(path):
                     "\\n\\n11.0.3 更新\\n修正启动时隐藏项目流程的内部方法签名，避免启动闪退"
                 ),
             })
+    if chinese:
+        addition = ("\\n\\n11.0.4 更新\\n優先掃描新加入與最近變更的資料夾；啟動時一併使用一般與隱藏資料夾的路徑快取。\\n日期排序拆成建立日期（加入時間）與修改日期。無可靠建立時間的既有檔案初次以修改時間建立基準；之後新檔案記錄首次加入時間。")
+    else:
+        addition = ("\\n\\nChanges in 11.0.4\\nPrioritize new and recently changed folders; reuse normal and hidden folder path caches.\\nSeparate creation (added) and modification sorting. Existing files without a reliable creation time initially use modification time; later additions retain their first observed time.")
+    strings["eink_features_content"] += addition
     strings.update({key: "" for key in RETIRED_STRINGS})
     return strings
 

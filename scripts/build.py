@@ -16,8 +16,8 @@ BASE_SHA256 = "8a707e4285e22e668d50305864d05eb968ea584a56ec2d89e1ce50336fd5c605"
 RELEASE_BASE_SHA256 = "1eb348eab476fda8f4be42b64c438767d60a65daa61aebc9b6c818c0bdf10405"
 MAINTAINED_BASE_SHA256 = (RELEASE_BASE_SHA256, "62cd0745a358ff11c8f098f2cbe4d5cd7ecabfe0102a490a66b32d68cc613947", "f16bebaeb1e71a62668e7971a2c104f1760cf4ac42142a3f06cf6765950f44bf", "3f9e83b3f6e263a2e4e62dead7e1c50bf2b625681850aa206a1301fa369acab8")
 PACKAGE = "io.github.jason840709.quickpic"
-VERSION_NAME = "11.0.3"
-VERSION_CODE = 11003001
+VERSION_NAME = "11.0.4"
+VERSION_CODE = 11004001
 
 
 def sha(path):
@@ -124,6 +124,9 @@ def build(args):
     animation = importlib.import_module("patch_animation")
     defaults = importlib.import_module("patch_defaults")
     links = importlib.import_module("check_local_links")
+    dates = importlib.import_module("patch_dates")
+    scan = importlib.import_module("patch_scan")
+    index = importlib.import_module("patch_index")
     xphoto = importlib.import_module("patch_xphoto")
     about = importlib.import_module("patch_about")
     with tempfile.TemporaryDirectory(prefix="quickpic-build-") as temporary:
@@ -139,9 +142,21 @@ def build(args):
         defaults.patch(decoded)
         xphoto.patch(decoded)
         about.patch(decoded)
+        dates.patch(decoded)
+        scan.patch(decoded)
+        index.patch(decoded)
         normalize.patch(decoded, package=args.package, version_name=VERSION_NAME,
                         version_code=VERSION_CODE, app_name="快圖")
         startup_links = links.check_hidden_default(decoded)
+        resolver = links.LocalLinks(decoded)
+        new_links = []
+        for smali in decoded.glob("smali*/**/*.smali"):
+            source = smali.read_text()
+            hooked = "\n".join(line for line in source.splitlines()
+                if any("Lcom/alensw/jni/" + helper + ";" in line for helper in
+                       ("MediaDates", "DateSort", "ScanPriority", "ScanPriority$Pending")))
+            if hooked:
+                new_links.append(resolver.check(hooked))
         unsigned, aligned, signed = (work / name for name in ("unsigned.apk", "aligned.apk", "signed.apk"))
         run([*apktool_command(args.apktool), "b", "-o", unsigned, decoded])
         verify_output(unsigned)

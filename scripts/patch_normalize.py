@@ -22,7 +22,7 @@ def normalize_progress(root):
  if after!=before:path.write_bytes(after)
  return {'path':PROGRESS_PATH,'changed':after!=before}
 
-def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.3',version_code=11003001,app_name='快圖'):
+def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.4',version_code=11004001,app_name='快圖'):
  root=Path(decoded_root);manifest=root/'AndroidManifest.xml';old=ET.parse(manifest).getroot().get('package')
  if not old or not re.fullmatch(r'[a-zA-Z]\w*(?:\.[a-zA-Z]\w*)+',package):raise ValueError('Invalid package')
  replacements=[(old.replace('.','/'),package.replace('.','/')),(old,package),
@@ -46,7 +46,7 @@ def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11
     dst.parent.mkdir(parents=True,exist_ok=True);shutil.move(str(src),str(dst));moved.append(str(dst.relative_to(root)))
  for p in (root/'res').glob('values*/strings.xml'):
   text=p.read_text()
-  for name,value in [('app_name',app_name),('version_number',version_name),('app_name_full','QuickPic Gallery Mod 2'),('update_desc','GitHub Releases')]:
+  for name,value in [('app_name',app_name),('version_number',version_name),('app_name_full','QuickPic Gallery Mod II'),('update_desc','GitHub Releases')]:
    text=re.sub(r'(<string\b[^>]*name="'+name+r'"[^>]*>).*?(</string>)',lambda m:m.group(1)+value+m.group(2),text,flags=re.S)
   p.write_text(text)
  yml=root/'apktool.yml';text=yml.read_text()

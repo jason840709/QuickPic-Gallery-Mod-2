@@ -124,6 +124,7 @@ public class JniUtils {
             if (!onlyFolders && (flags & 8) != 0 && new File(directory, ".nomedia").exists()) return -3;
             File[] entries = directory.listFiles();
             if (entries == null) return -3;
+            MediaDates.observeDirectory(directory, entries);
             Map<String, Character> extensions = scanner.extensions;
             int count = 0;
             for (File entry : entries) {
