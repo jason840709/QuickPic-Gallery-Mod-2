@@ -19,6 +19,10 @@ Start a slideshow directly from the viewer. Both phone and tablet toolbars provi
 
 New installations display each image for 3 seconds by default. The interval control opens a dialog with 3, 5, 10, 30 and 60 seconds, plus a custom value from 1 to 86400 seconds. The input remembers the last custom value even after switching to a preset. Tap Custom to apply that saved value immediately, or enter a new value and tap Apply custom to save and use it. It sets how long each image stays on screen. Slideshows use the current image list and offer sequential or shuffled playback.
 
+### Folder scanning and date sorting
+
+Scanning explores new or recently changed folders before revisiting known paths, so newly downloaded comics can be found sooner. Creation/added-time and modification sorting are separate choices. Existing files without a reliable creation time initially use modification time; later additions retain their first observed time.
+
 ### Screensaver images
 
 Open the image’s three-dot menu, choose Set as, then select the screensaver action. The app creates a **1860 × 2480 pixel PNG** in `QuickPic-Screensaver`.
