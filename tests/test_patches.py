@@ -56,7 +56,7 @@ class BuildTests(unittest.TestCase):
 
     def test_formal_release_identity(self):
         self.assertEqual((build.PACKAGE, build.VERSION_NAME, build.VERSION_CODE),
-                         ("io.github.jason840709.quickpic", "11.0.5", 11005001))
+                         ("io.github.jason840709.quickpic", "11.0.6", 11006001))
 
     def test_native_output_rejected(self):
         import zipfile
@@ -91,13 +91,16 @@ class CoreTests(unittest.TestCase):
 
 
 class FeatureTests(unittest.TestCase):
-    def test_about_preserves_eink_history_and_separates_new_features(self):
+    def test_about_preserves_eink_history_inside_first_public_release(self):
         values = patch_about.replacement_strings(Path("res/values-zh-rTW/strings.xml"))
         body = values["eink_features_content"]
         self.assertEqual(values["eink_features_title"], "版本開發紀錄")
         self.assertIn(patch_about.HISTORICAL_EINK_TW.replace("\n", "\\n"), body)
-        self.assertTrue(body.startswith("11.0.0 前的 E-Ink 優化紀錄"))
-        self.assertIn("11.0.0 新增功能", body)
+        self.assertTrue(body.startswith("11.0.0 新增功能"))
+        self.assertNotIn("11.0.0 前的", body)
+        self.assertEqual(values[patch_about.LATEST_TITLE], "最新版本更新內容")
+        self.assertEqual(values[patch_about.ARCHIVE_TITLE], "完整版本開發紀錄")
+        self.assertTrue(values[patch_about.LATEST_CONTENT].startswith("11.0.6 更新"))
         self.assertIn("已用 64 位元手機經過測試", body)
         for original_feature in ("無動畫", "左下角", "包含/排除資料夾", "v2 新增"):
             self.assertIn(original_feature, body)
@@ -112,7 +115,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual([n.get("name") for n in root], ["paypal", "unrelated", "github_url", "version_number"])
         self.assertEqual(root[1].text, "keep me")
         self.assertEqual(root[2].text, patch_about.REPO + "/blob/main/README.md")
-        self.assertEqual(root[3].text, "11.0.5")
+        self.assertEqual(root[3].text, "11.0.6")
         self.assertEqual(patch_about.normalize_strings(result, path), result)
 
     def test_xphoto_only_changes_open_method(self):
@@ -144,6 +147,23 @@ class FeatureTests(unittest.TestCase):
             root = ET.parse(path).getroot()
             self.assertEqual([node.get(A + "id") for node in list(root)[:2]], ["@id/slideshow", "@id/delete"])
             self.assertEqual([node.get(A + "showAsAction") for node in root], ["always", "never", "never", "never", None, "never"])
+
+    def test_timer_replaces_gallery_icon_in_all_drawable_variants(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for folder in ("drawable", "drawable-v24"):
+                write(root, "res/" + folder + "/ic_slide_interval.xml", "<vector />")
+            paths = patch_viewer.patch_interval_icon(root)
+            self.assertEqual(len(paths), 2)
+            for rel in paths:
+                icon = ET.parse(root / rel).getroot()
+                self.assertEqual(icon.get(A + "viewportWidth"), "24")
+                self.assertEqual(icon.get(A + "viewportHeight"), "24")
+                self.assertNotIn(A + "tint", icon.attrib)  # Java resolves the App action-icon theme.
+                self.assertIn("M9,1h6v2H9z", icon.find("path").get(A + "pathData"))
+            before = [(root / rel).read_bytes() for rel in paths]
+            patch_viewer.patch_interval_icon(root)
+            self.assertEqual(before, [(root / rel).read_bytes() for rel in paths])
 
     def test_about_preserves_other_preferences(self):
         original = '<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">\n<Preference android:key="storage" android:title="Keep storage" />\n<PreferenceScreen android:title="@string/about"><Preference android:layout="@layout/about_version" /><Preference android:title="@string/caio_name"><intent android:data="https://old.invalid/contact" /></Preference></PreferenceScreen>\n<Preference android:key="viewer" android:title="Keep viewer" />\n</PreferenceScreen>'
@@ -192,7 +212,7 @@ class NormalizeTests(unittest.TestCase):
             self.assertIn("QuickPic-Screensaver", normalized)
             self.assertIn("screensaver-1860x2480-", normalized)
             self.assertNotIn(old.replace(".", "/"), normalized)
-            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.5")
+            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.6")
             self.assertIn("QuickPic-Gallery-Mod-2/releases", (root / "res/xml/main_pref.xml").read_text())
             self.assertEqual(ET.parse(root / "res/values/strings.xml").getroot()[0].text, "快圖")
 

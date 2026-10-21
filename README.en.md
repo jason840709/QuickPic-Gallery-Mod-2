@@ -17,7 +17,7 @@ QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It build
 
 Start a slideshow directly from the viewer. Both phone and tablet toolbars provide slideshow playback and a Slideshow interval button. Delete, edit and share are in the three-dot menu.
 
-New installations display each image for 3 seconds by default. The interval control opens a dialog with 3, 5, 10, 30 and 60 seconds, plus a custom value from 1 to 86400 seconds. The input remembers the last custom value even after switching to a preset. It sets how long each image stays on screen. Slideshows use the current image list and offer sequential or shuffled playback.
+New installations display each image for 3 seconds by default. The interval control opens a dialog with 3, 5, 10, 30 and 60 seconds, plus a custom value from 1 to 86400 seconds. The input remembers the last custom value even after switching to a preset. Tap Custom to apply that saved value immediately, or enter a new value and tap Apply custom to save and use it. It sets how long each image stays on screen. Slideshows use the current image list and offer sequential or shuffled playback.
 
 ### Screensaver images
 

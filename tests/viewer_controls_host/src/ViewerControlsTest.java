@@ -91,32 +91,129 @@ public class ViewerControlsTest {
         Method m=ViewerControls.class.getDeclaredMethod("seconds",Context.class);
         m.setAccessible(true);return (Integer)m.invoke(null,context);
     }
+    static <T extends View> List<T> descendants(View view,Class<T> type) {
+        List<T> found=new ArrayList<T>();
+        if(type.isInstance(view))found.add(type.cast(view));
+        if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)
+            found.addAll(descendants(((ViewGroup)view).getChildAt(i),type));
+        return found;
+    }
     static EditText inlineInput(View view) {
-        if(view instanceof EditText)return (EditText)view;
-        if(view instanceof LinearLayout)for(View child:((LinearLayout)view).children){EditText input=inlineInput(child);if(input!=null)return input;}
-        return null;
+        List<EditText> fields=descendants(view,EditText.class);
+        check(fields.size()==1,"one inline custom input exists in actual view hierarchy");
+        return fields.get(0);
+    }
+    static List<RadioButton> options(AlertDialog dialog) {
+        return descendants(dialog.view,RadioButton.class);
+    }
+    static int selectedIndex(AlertDialog dialog) {
+        int selected=-1,count=0,index=0;
+        for(RadioButton option:options(dialog)) {
+            if(option.isChecked()){selected=index;count++;}index++;
+        }
+        check(count==1,"exactly one actual radio option starts checked");
+        List<RadioGroup> groups=descendants(dialog.view,RadioGroup.class);
+        check(groups.size()==1,"one actual RadioGroup owns the choices");
+        equal(groups.get(0).getCheckedRadioButtonId(),options(dialog).get(selected).getId(),
+              "RadioGroup checked ID matches the visibly checked initial option");
+        return selected;
+    }
+    static void select(AlertDialog dialog,int index) {
+        check(options(dialog).get(index).performClick(),"radio option has a real click listener "+index);
     }
     static AlertDialog open(Context context,Object controller) {
         int count=AlertDialog.shown.size();
+        int commits=PreferenceManager.prefs.commits;
         ViewerControls.showDialog(context,controller);
         check(AlertDialog.shown.size()==count+1,"opening interval creates one dialog");
         AlertDialog dialog=AlertDialog.last;
-        check(inlineInput(dialog.view)!=null,"the first interval dialog contains editable custom input");
+        inlineInput(dialog.view);
+        check(options(dialog).size()==6,"five preset RadioButtons plus one custom RadioButton");
+        check(PreferenceManager.prefs.commits==commits,"opening dialog and initial checked state do not write preferences");
         return dialog;
-    }
-    static EditText chooseCustom(AlertDialog dialog) {
-        int count=AlertDialog.shown.size();
-        EditText input=inlineInput(dialog.view);
-        int focusBefore=input.focusRequests;
-        dialog.select(5);
-        check(!dialog.dismissed && AlertDialog.last==dialog && AlertDialog.shown.size()==count,
-              "custom choice stays in same dialog without a second modal");
-        check(input.focused && input.focusRequests>focusBefore,"custom choice focuses inline input");
-        return input;
     }
     static void applyCustom(Context context,Object controller,String value) {
         AlertDialog dialog=open(context,controller);
-        EditText input=chooseCustom(dialog);input.setText(value);dialog.positiveButton.performClick();
+        EditText input=inlineInput(dialog.view);input.setText(value);dialog.positiveButton.performClick();
+    }
+    static void testAndroidBoundaryRegressions() {
+        Context context=new Context();
+        RadioGroup anonymous=new RadioGroup(context);
+        RadioButton prechecked=new RadioButton(context);prechecked.setChecked(true);anonymous.addView(prechecked);
+        check(prechecked.getId()!=View.NO_ID,"RadioGroup hierarchy listener generates an anonymous child's ID");
+        equal(anonymous.getCheckedRadioButtonId(),View.NO_ID,"prechecking before ID assignment reproduces Android stale checkedId");
+        RadioButton second=new RadioButton(context);second.setId(View.generateViewId());anonymous.addView(second);second.performClick();
+        check(prechecked.isChecked() && second.isChecked(),"stale checkedId regression can leave two radio choices visibly checked");
+        RadioGroup identified=new RadioGroup(context);
+        RadioButton one=new RadioButton(context);one.setId(View.generateViewId());one.setChecked(true);identified.addView(one);
+        RadioButton two=new RadioButton(context);two.setId(View.generateViewId());identified.addView(two);
+        equal(identified.getCheckedRadioButtonId(),one.getId(),"assigning ID before checking lets group record initial choice");
+        two.performClick();
+        check(!one.isChecked() && two.isChecked(),"identified radio buttons retain mutual exclusion on click");
+        equal(identified.getCheckedRadioButtonId(),two.getId(),"click updates RadioGroup checked ID");
+        ScrollView defaultScroll=new ScrollView(context);defaultScroll.setFocusableInTouchMode(true);
+        LinearLayout defaultContent=new LinearLayout(context);EditText defaultInput=new EditText(context);
+        defaultContent.addView(defaultInput);defaultScroll.addView(defaultContent);
+        equal(defaultScroll.getDescendantFocusability(),ViewGroup.FOCUS_AFTER_DESCENDANTS,"ScrollView starts with Android descendant-first focus");
+        check(defaultScroll.requestFocus() && defaultInput.focused && !defaultScroll.focused,
+              "default ScrollView requestFocus delegates into editable descendant");
+        ScrollView parentFirst=new ScrollView(context);parentFirst.setFocusableInTouchMode(true);
+        LinearLayout ownContent=new LinearLayout(context);EditText ownInput=new EditText(context);
+        ownContent.addView(ownInput);parentFirst.addView(ownContent);
+        parentFirst.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        check(parentFirst.requestFocus() && parentFirst.focused && !ownInput.focused,
+              "explicit parent-first ScrollView focus keeps editable descendant unfocused");
+    }
+    static void testDialogLayout() {
+        for(float density:new float[]{1.0f,1.5f,3.0f})for(int radioTextStart:new int[]{37,79}) {
+            resetPreferences();saved(ACTIVE,"3");saved(CUSTOM,"7");Context context=new Context();
+            context.res.metrics.density=density;context.res.radioTextStartPx=radioTextStart;
+            AlertDialog dialog=open(context,new com.alensw.ui.c.as(0,null));
+            check(dialog.view instanceof ScrollView,"dialog custom view is scrollable at density "+density);
+            ScrollView scroll=(ScrollView)dialog.view;
+            check(scroll.getChildCount()==1,"ScrollView has exactly one content child");
+            equal(scroll.getDescendantFocusability(),ViewGroup.FOCUS_BEFORE_DESCENDANTS,"production overrides ScrollView descendant-first focus");
+            check(scroll.focusableInTouchMode && scroll.focused,"dialog initially focuses scroll content to avoid requesting input keyboard");
+            LinearLayout content=(LinearLayout)scroll.getChildAt(0);
+            check(content.getOrientation()==LinearLayout.VERTICAL && content.getChildCount()==2,
+                  "vertical content contains choices followed by custom editor");
+            equal(content.getPaddingStart(),Math.round(24*density),"content start uses 24 dp");
+            equal(content.getPaddingEnd(),Math.round(24*density),"content end uses 24 dp");
+            check(content.getChildAt(0) instanceof RadioGroup,"all options share one RadioGroup");
+            RadioGroup choices=(RadioGroup)content.getChildAt(0);
+            check(choices.getOrientation()==LinearLayout.VERTICAL && choices.getChildCount()==6,"radio choices are vertically arranged");
+            List<RadioButton> radio=options(dialog);
+            equal(choices.getCheckedRadioButtonId(),radio.get(0).getId(),"production RadioGroup records initial preset checked ID");
+            Set<Integer> generatedIds=new HashSet<Integer>();
+            for(RadioButton option:radio) {
+                check(option.getId()!=View.NO_ID && option.getId()>0 && option.getId()<=0x00ffffff,"radio has a valid generated runtime ID");
+                check(generatedIds.add(option.getId()),"each radio has a unique runtime ID");
+                equal(option.idAtFirstSetChecked,option.getId(),"production assigns ID before initial setChecked and addView");
+                check(option.getMinHeight()>=Math.round(48*density),"radio touch target has at least 48 dp height");
+                equal(option.getPaddingStart(),0,"radio padding does not add a separate guessed alignment");
+                check(option.getLayoutParams() instanceof RadioGroup.LayoutParams,"each radio has RadioGroup LayoutParams");
+                equal(option.getLayoutParams().width,ViewGroup.LayoutParams.MATCH_PARENT,"radio row fills content width");
+                equal(option.getLayoutParams().height,ViewGroup.LayoutParams.WRAP_CONTENT,"radio row wraps content height");
+            }
+            LinearLayout editor=(LinearLayout)content.getChildAt(1);
+            check(editor.getOrientation()==LinearLayout.HORIZONTAL && editor.getChildCount()==2,
+                  "custom editor is one row below options with input then seconds suffix");
+            equal(editor.getPaddingStart(),radio.get(5).getCompoundPaddingStart(),"custom editor aligns to actual custom radio text start");
+            equal(editor.getPaddingStart(),radioTextStart,"alignment follows theme indicator width instead of hardcoded spacing");
+            equal(editor.getPaddingBottom(),Math.round(8*density),"editor bottom spacing uses dp");
+            EditText input=inlineInput(dialog.view);
+            check(editor.getChildAt(0)==input,"input is under option text rather than a separately aligned dialog field");
+            equal(input.getLayoutParams().width,Math.round(88*density),"numeric input has compact 88 dp width");
+            equal(input.getLayoutParams().height,ViewGroup.LayoutParams.WRAP_CONTENT,"numeric input wraps height");
+            check(input.getMinHeight()>=Math.round(48*density),"numeric input retains 48 dp touch target");
+            check(!input.focused && input.focusRequests==0,"parent-first focus avoids delegating into numeric field");
+            equal(input.hint,"1–86400","input hint does not repeat external seconds suffix");
+            TextView suffix=(TextView)editor.getChildAt(1);
+            equal(suffix.getText().toString(),"s","seconds unit appears directly after numeric field");
+            equal(suffix.getPaddingStart(),Math.round(8*density),"suffix has 8 dp gap from field");
+            equal(suffix.getLayoutParams().width,ViewGroup.LayoutParams.WRAP_CONTENT,"seconds suffix width wraps content");
+            dialog.cancel();
+        }
     }
     static void testMenuOrder() {
         MenuLayout.order(null,new int[]{SLIDE});
@@ -193,23 +290,23 @@ public class ViewerControlsTest {
         AlertDialog first=open(context,controller);
         equal(first.title.toString(),"resource:7f0a007b","dialog requests the interval title resource");
         equal(first.positiveLabel.toString(),"套用自訂","Traditional Chinese custom-apply button");
-        equal(first.selected,0,"active 3-second preset selected on first open");
-        check(first.labels.length==6,"five presets plus one custom choice");
+        equal(selectedIndex(first),0,"active 3-second preset selected on first open");
+        equal(options(first).get(0).getText().toString(),"3 s","first actual radio label shows 3 s");
         EditText initial=inlineInput(first.view);
         check(initial.inputType==android.text.InputType.TYPE_CLASS_NUMBER,"inline input accepts numeric values");
         first.cancel();
         check(!PreferenceManager.prefs.map.containsKey(CUSTOM),"cancel first dialog does not create a custom preference");
         saved(ACTIVE,"7");
         AlertDialog migrated=open(context,controller);
-        equal(migrated.selected,5,"existing nonpreset active interval selects custom");
+        equal(selectedIndex(migrated),5,"existing nonpreset active interval selects custom");
         equal(inlineInput(migrated.view).getText().toString(),"7","existing nonpreset interval initializes the custom field");
-        migrated.select(0);
+        select(migrated,0);
         equal(saved(CUSTOM),"7","first preset switch remembers a preexisting custom active interval");
         int[] presets={3,5,10,30,60};
         for(int index=0;index<presets.length;index++) {
             saved(ACTIVE,"7");saved(CUSTOM,"7");
             AlertDialog dialog=open(context,controller);EditText input=inlineInput(dialog.view);input.setText("99");
-            dialog.select(index);
+            select(dialog,index);
             equal(saved(ACTIVE),Integer.toString(presets[index]),"preset commits immediately "+presets[index]);
             equal(controller.millis(),presets[index]*1000,"preset updates active controller "+presets[index]);
             equal(saved(CUSTOM),"7","preset keeps remembered custom value "+presets[index]);
@@ -219,17 +316,38 @@ public class ViewerControlsTest {
         equal(saved(ACTIVE),"7","custom apply changes active seconds");equal(saved(CUSTOM),"7","custom apply remembers custom seconds separately");
         equal(controller.millis(),7000,"custom apply updates active controller");
         check(AlertDialog.last.dismissed,"custom apply closes original dialog");
-        AlertDialog preset=open(context,controller);preset.select(0);
+        AlertDialog preset=open(context,controller);select(preset,0);
         equal(saved(ACTIVE),"3","preset can become active after custom");equal(saved(CUSTOM),"7","custom 7 survives activating preset 3");
         AlertDialog reopened=open(context,controller);
-        equal(reopened.selected,0,"active preset stays selected when custom remembered");
+        equal(selectedIndex(reopened),0,"active preset stays selected when custom remembered");
         equal(inlineInput(reopened.view).getText().toString(),"7","reopened editable field contains remembered 7 while preset 3 is active");
-        check(reopened.labels[5].toString().contains("7"),"custom choice displays its remembered 7-second value");
-        chooseCustom(reopened).setText("23");reopened.cancel();
+        check(options(reopened).get(5).getText().toString().contains("7"),"actual custom radio displays its remembered 7-second value");
+        int modalCount=AlertDialog.shown.size();
+        select(reopened,5);
+        check(reopened.dismissed && AlertDialog.shown.size()==modalCount,"custom radio applies saved value and closes the same dialog immediately");
+        equal(saved(ACTIVE),"7","custom radio immediately restores remembered 7 after preset 3");
+        equal(saved(CUSTOM),"7","custom radio preserves remembered 7");
+        equal(controller.millis(),7000,"custom radio immediately updates active slideshow controller");
+        saved(ACTIVE,"3");AlertDialog withDraft=open(context,controller);
+        inlineInput(withDraft.view).setText("23");select(withDraft,5);
+        check(withDraft.dismissed,"custom radio also closes when an unsaved draft exists");
+        equal(saved(ACTIVE),"7","custom radio uses remembered 7 rather than unsaved draft 23");
+        equal(saved(CUSTOM),"7","clicking custom does not save unsaved draft");
+        saved(ACTIVE,"3");AlertDialog cancelled=open(context,controller);
+        inlineInput(cancelled.view).setText("23");cancelled.cancel();
         equal(saved(ACTIVE),"3","cancel does not apply custom draft");equal(saved(CUSTOM),"7","cancel does not overwrite remembered custom draft");
+        applyCustom(context,controller,"23");
+        equal(saved(ACTIVE),"23","Apply custom applies edited 23-second draft");
+        equal(saved(CUSTOM),"23","Apply custom saves edited 23 separately");
+        equal(controller.millis(),23000,"edited custom draft updates active controller");
+        AlertDialog afterSave=open(context,controller);
+        equal(selectedIndex(afterSave),5,"saved nonpreset 23 is selected as custom on reopen");
+        equal(inlineInput(afterSave.view).getText().toString(),"23","reopened field reflects newly saved 23");
+        check(options(afterSave).get(5).getText().toString().contains("23"),"reopened custom label reflects newly saved 23");
+        afterSave.cancel();
         for(String value:new String[]{"","0","-1","86401","2147483648","1.5","abc"}) {
             saved(ACTIVE,"3");saved(CUSTOM,"7");AlertDialog dialog=open(context,controller);
-            EditText input=chooseCustom(dialog);input.setText(value);dialog.positiveButton.performClick();
+            EditText input=inlineInput(dialog.view);input.setText(value);dialog.positiveButton.performClick();
             check(!dialog.dismissed && input.error!=null,"invalid custom stays editable "+value);
             equal(saved(ACTIVE),"3","invalid custom does not persist active "+value);
             equal(saved(CUSTOM),"7","invalid custom does not replace custom "+value);
@@ -280,7 +398,7 @@ public class ViewerControlsTest {
         check(android.util.Log.errors==errors+1 && "10".equals(saved(ACTIVE)),"reflection failure logs an error and keeps persisted setting");
     }
     public static void main(String[] args)throws Exception {
-        testMenuOrder();testConfigure();testThemeTint();testDialog();testControllerLifecycle();
+        testMenuOrder();testConfigure();testThemeTint();testAndroidBoundaryRegressions();testDialogLayout();testDialog();testControllerLifecycle();
         System.out.println("PASS viewer controls host checks="+checks+"; actual helpers, host doubles only, no device equivalence");
     }
 }

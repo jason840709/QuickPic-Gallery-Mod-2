@@ -1,9 +1,13 @@
 package android.content.res;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
+import android.util.DisplayMetrics;
 import java.util.*;
 public class Resources {
  public final Configuration config=new Configuration();
+ public final DisplayMetrics metrics=new DisplayMetrics();
+ public int radioTextStartPx=36;
+ public DisplayMetrics getDisplayMetrics(){return metrics;}
  public final Map<Integer,Integer> colors=new HashMap<Integer,Integer>();
  public final List<Drawable> drawables=new ArrayList<Drawable>();
  public Configuration getConfiguration(){return config;}

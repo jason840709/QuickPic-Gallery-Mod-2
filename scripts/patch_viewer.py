@@ -67,9 +67,29 @@ def patch_menu(path):
     tree.write(path, encoding="utf-8", xml_declaration=True)
 
 
+# The existing resource ID is used by ViewerControls and must stay unchanged.
+TIMER_ICON = '''<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#ff000000" android:pathData="M9,1h6v2H9z M11,8h2v6h-2z M19.03,7.39l1.42,-1.42c-0.43,-0.51 -0.9,-0.99 -1.41,-1.41l-1.42,1.42C16.07,4.74 14.12,4 12,4c-4.97,0 -9,4.03 -9,9s4.03,9 9,9s9,-4.03 9,-9c0,-2.12 -0.74,-4.07 -1.97,-5.61z M12,20c-3.87,0 -7,-3.13 -7,-7s3.13,-7 7,-7s7,3.13 7,7s-3.13,7 -7,7z" />
+</vector>
+'''
+
+
+def patch_interval_icon(root):
+    root = Path(root)
+    paths = sorted((root / "res").glob("drawable*/ic_slide_interval.xml"))
+    if not paths or not (root / "res/drawable/ic_slide_interval.xml").is_file():
+        raise ValueError("Missing interval drawable; cannot replace the old gallery icon")
+    for path in paths:
+        path.write_text(TIMER_ICON)
+    return [str(path.relative_to(root)) for path in paths]
+
+
 def patch(root):
     root = Path(root)
-    paths = []
+    paths = patch_interval_icon(root)
     for name in ("as", "dp"):
         path = root / f"smali/com/alensw/ui/c/{name}.smali"
         patch_controller(path, name)

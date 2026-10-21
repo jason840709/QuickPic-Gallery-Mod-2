@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.3.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.6.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.3`，版本代碼為 `11003001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.6`，版本代碼為 `11006001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -130,4 +130,6 @@ python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /p
 
 ## 看圖與設定介面檢查
 
-`python tests/viewer_controls_host/run.py` 使用實際輔助程式測試工具列、主題與自訂秒數；`python tests/folder_path_host/run.py --decoded <原APK解碼目錄> --work-dir <工作目錄>`核對路徑編輯補丁；`python tests/about_history_host/run.py --decoded <原APK解碼目錄>`檢查離線歷史頁與完整舊文字。最終APK仍須核對原有public資源ID、新layout連結與DEX方法簽名；手機排版和鍵盤需另外驗收。
+`python tests/viewer_controls_host/run.py` 使用實際輔助程式測試工具列、主題與自訂秒數；`python tests/folder_path_host/run.py --decoded <原APK解碼目錄> --work-dir <工作目錄>`核對路徑編輯補丁；`python tests/about_history_host/run.py --decoded <原APK解碼目錄>`檢查離線歷史頁、最新／完整紀錄兩部分，以及將舊E-Ink內容歸入11.0.0後的功能保全。最終APK仍須核對原有public資源ID、新layout連結與DEX方法簽名；手機排版和鍵盤需另外驗收。
+
+11.0.6的間隔視窗使用可捲動的單一內容區。選項按鈕直接套用已保存的秒數，輸入欄的新值只由「套用自訂」保存；主機測試分別核對這兩種操作及1～86400秒範圍。輸入欄的左邊界取自實際主題單選按鈕的文字內距，工具列的計時器向量沿用原資源ID。實際螢幕、字體放大與鍵盤顯示仍需裝置確認。

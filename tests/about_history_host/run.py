@@ -56,19 +56,19 @@ class MigrationTests(unittest.TestCase):
         old = 'Original E-Ink text\\n\\nChanges in 11.0.2\\nAn older exact record\\n\\nChanges in 11.0.9\\nA supplied future record'
         canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
         result = patch_about.merge_history(old, canonical)
-        self.assertTrue(display_value(result).startswith(display_value(old)))
+        self.assertIn("Original E-Ink text", patch_about.history_sections(result)[1]["11.0.0"][1])
         self.assertEqual(display_value(result).count("Changes in 11.0.2\n"), 1)
         self.assertIn("An older exact record", result)
         self.assertIn("A supplied future record", result)
         self.assertEqual(patch_about.merge_history(result, canonical), result)
-        for version in range(6):
+        for version in range(7):
             self.assertIn("Changes in 11.0." + str(version) + "\n", display_value(result))
 
     def test_actual_newlines_and_android_quotes_remain_readable(self):
         old = '"E-Ink notes\n · Keep the author\\\'s wording and \\"quotes\\""'
         canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
         result = patch_about.merge_history(old, canonical)
-        self.assertTrue(display_value(result).startswith(display_value(old)))
+        self.assertIn(display_value(old), patch_about.history_sections(result)[1]["11.0.0"][1])
         self.assertEqual(patch_about.merge_history(result, canonical), result)
 
     def test_localized_labels_and_existing_resource_names(self):
@@ -82,7 +82,9 @@ class MigrationTests(unittest.TestCase):
             parsed = strings(result)
             self.assertEqual(parsed["eink_features_title"], label)
             self.assertEqual(parsed["app_name"], "Keep")
-            self.assertIn("11.0.5", parsed["eink_features_content"])
+            self.assertIn("11.0.6", parsed["eink_features_content"])
+            self.assertIn("11.0.6", parsed[patch_about.LATEST_CONTENT])
+            self.assertEqual(parsed[patch_about.ARCHIVE_TITLE], {"values": "Complete version history", "values-zh-rTW": "完整版本開發紀錄", "values-zh-rCN": "完整版本开发记录"}[folder])
             self.assertEqual(patch_about.normalize_strings(result, Path("res") / folder / "strings.xml"), result)
 
     def test_header_removal_requires_successful_copy(self):
@@ -90,7 +92,10 @@ class MigrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Copy development history"):
             patch_about.normalize_header(original)
         migrated = patch_about.history_layout(original)
-        self.assertEqual(structure(ET.fromstring(migrated)), structure(ET.fromstring(original)[2]))
+        migrated_root = ET.fromstring(migrated)
+        self.assertEqual(migrated_root.attrib, ET.fromstring(original)[2].attrib)
+        self.assertEqual([n.get(A + "text") for n in migrated_root], ["@string/" + key for key in (
+            patch_about.LATEST_TITLE, patch_about.LATEST_CONTENT, patch_about.ARCHIVE_TITLE, "eink_features_content")])
         header = patch_about.normalize_header(original, history_copied=True)
         self.assertNotIn("eink_features_", header)
         self.assertEqual(len(ET.fromstring(header).findall("include")), 1)
@@ -112,6 +117,33 @@ class MigrationTests(unittest.TestCase):
         self.assertTrue(any(n.get(A + "title") == "@string/caio_name" for n in about.iter()))
         self.assertNotIn("old.invalid", result)
         self.assertEqual(patch_about.normalize_preferences(result), result)
+
+    def test_old_heading_removed_and_eink_grouped_in_first_public_release(self):
+        for heading, folder, record in (("E-Ink feature record before 11.0.0", "values", "Changes in 11.0.0"),
+                                         ("11.0.0 前的 E-Ink 優化紀錄", "values-zh-rTW", "11.0.0 新增功能")):
+            old = heading + "\n\nKeep all E-Ink instructions\n\n" + record + "\nKeep 64-bit instructions"
+            canonical = patch_about.replacement_strings(Path("res") / folder / "strings.xml")["eink_features_content"]
+            merged = display_value(patch_about.merge_history(old, canonical))
+            preamble, sections = patch_about.history_sections(merged)
+            self.assertFalse(preamble)
+            self.assertNotIn(heading, merged)
+            self.assertEqual(sections["11.0.0"][1], "Keep all E-Ink instructions\n\nKeep 64-bit instructions")
+            self.assertEqual(list(sections), ["11.0." + str(v) for v in range(7)])
+
+    def test_latest_summary_and_archive_share_current_release_content(self):
+        for folder in ("values", "values-zh-rTW", "values-zh-rCN"):
+            values = patch_about.replacement_strings(Path("res") / folder / "strings.xml")
+            _, archive = patch_about.history_sections(values["eink_features_content"])
+            latest_preamble, latest = patch_about.history_sections(values[patch_about.LATEST_CONTENT])
+            self.assertFalse(latest_preamble)
+            self.assertEqual(latest["11.0.6"], archive["11.0.6"])
+            self.assertEqual(len(latest), 1)
+            self.assertEqual(values["version_number"], "11.0.6")
+
+    def test_duplicate_supplied_versions_fail_without_dropping_text(self):
+        canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
+        with self.assertRaisesRegex(ValueError, "Duplicate history record"):
+            patch_about.merge_history("Changes in 11.0.2\nFirst\n\nChanges in 11.0.2\nSecond", canonical)
 
     def test_invalid_history_cannot_partially_write_a_decode(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -175,25 +207,37 @@ def actual_checks(decoded, work, aapt2=None):
             new = strings(after)
             check(relative + " retains launcher name", old.get("app_name") == new.get("app_name"))
             if "eink_features_content" in old:
-                check(relative + " retains every existing history character", new["eink_features_content"].startswith(old["eink_features_content"]))
+                preamble, old_sections = patch_about.history_sections(old["eink_features_content"])
+                new_preamble, new_sections = patch_about.history_sections(new["eink_features_content"])
+                check(relative + " starts with the first public release", not new_preamble and list(new_sections)[0] == "11.0.0")
+                if preamble:
+                    check(relative + " retains all E-Ink prose under 11.0.0", preamble in new_sections["11.0.0"][1])
+                for version, (_, body) in old_sections.items():
+                    check(relative + " retains all supplied prose for " + version, body in new_sections[version][1])
+                check(relative + " removes only obsolete pre-release heading", "E-Ink feature record before 11.0.0" not in new["eink_features_content"] and "11.0.0 前的 E-Ink" not in new["eink_features_content"])
             if "eink_features_content" in new:
                 body = new["eink_features_content"]
-                for version in range(6):
+                for version in range(7):
                     pattern = r"(?:^|\n)(?:Changes in )?11\.0\." + str(version) + r"(?: 更新| 新增功能)?\n"
                     check(relative + " has one record for 11.0." + str(version), len(re.findall(pattern, body)) == 1)
             if "version_number" in new:
-                check(relative + " displays 11.0.5", new["version_number"] == "11.0.5")
+                check(relative + " displays 11.0.6", new["version_number"] == "11.0.6")
         elif relative == "res/values/public.xml":
             check("all existing public resource IDs unchanged", before == after)
     for folder, label in (("values", "Version development history"),
                           ("values-zh-rTW", "版本開發紀錄"), ("values-zh-rCN", "版本开发记录")):
-        check(folder + " localizes development history", strings(first["res/" + folder + "/strings.xml"])["eink_features_title"] == label)
+        values = strings(first["res/" + folder + "/strings.xml"])
+        check(folder + " localizes development history", values["eink_features_title"] == label)
+        check(folder + " latest summary contains only current version", list(patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]) == ["11.0.6"])
+        check(folder + " latest and full history show identical current changes", patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]["11.0.6"] == patch_about.history_sections(values["eink_features_content"])[1]["11.0.6"])
     header = ET.fromstring(first["res/layout/about_version.xml"])
     check("About header contains only app identity", {n.get(A + "text") for n in header.iter("TextView")} == {
         "@string/app_name_full", "@string/version_number", "@string/build_type"})
-    old_block = patch_about.history_block(ET.fromstring(original["res/layout/about_version.xml"]))
-    if old_block is not None:
-        check("entire original history layout preserved", structure(old_block) == structure(ET.fromstring(first["res/layout/quickpic_version_history.xml"])))
+    history = ET.fromstring(first["res/layout/quickpic_version_history.xml"])
+    check("latest summary precedes complete chronological archive", [n.get(A + "text") for n in history] == [
+        "@string/" + key for key in (patch_about.LATEST_TITLE, patch_about.LATEST_CONTENT, patch_about.ARCHIVE_TITLE, "eink_features_content")])
+    check("two history sections have visible spacing", history[2].get(A + "layout_marginTop") == "24dip")
+    check("history text adapts to the actual theme", all(n.get(A + "textColor", "").startswith("?android:") for n in history))
     if aapt2:
         # Compile the modified resources only. No final APK is produced.
         compile_res = work / "compile-res"
@@ -209,7 +253,7 @@ def actual_checks(decoded, work, aapt2=None):
         if result.returncode:
             print(result.stderr, file=sys.stderr)
     return {"passed": all(c["passed"] for c in checks), "checks": checks,
-            "scope": "About/history XML, locales, exact historical text, stable public IDs and idempotence; no Android execution",
+            "scope": "About/history XML, latest summary and chronological archive, historical prose preservation, locales, stable public IDs and idempotence; no Android execution",
             "aapt2_resource_compilation": bool(aapt2),
             "input_sha256": {k: hashlib.sha256(v.encode()).hexdigest() for k, v in original.items()},
             "output_sha256": {k: hashlib.sha256(v.encode()).hexdigest() for k, v in first.items()}}

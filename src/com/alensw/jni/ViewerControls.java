@@ -14,7 +14,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -83,30 +89,69 @@ public final class ViewerControls {
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         input.setText(Integer.toString(remembered));
-        input.setHint("1–86400 s");
-        CharSequence[] labels = new CharSequence[PRESETS.length + 1];
+        input.setHint("1–86400");
+        final RadioGroup choices = new RadioGroup(context);
+        choices.setOrientation(LinearLayout.VERTICAL);
+        final RadioButton[] options = new RadioButton[PRESETS.length + 1];
         int selected = PRESETS.length;
         for (int i = 0; i < PRESETS.length; i++) {
-            labels[i] = PRESETS[i] + " s";
             if (PRESETS[i] == current) selected = i;
         }
-        labels[PRESETS.length] = context.getString(CUSTOM) + " (" + remembered + " s)";
+        for (int i = 0; i < options.length; i++) {
+            RadioButton option = new RadioButton(context);
+            option.setId(View.generateViewId());
+            option.setText(i < PRESETS.length ? PRESETS[i] + " s"
+                    : context.getString(CUSTOM) + " (" + remembered + " s)");
+            option.setPadding(0, 0, 0, 0);
+            option.setMinHeight(dp(context, 48));
+            option.setChecked(i == selected);
+            choices.addView(option, new RadioGroup.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            options[i] = option;
+        }
+        LinearLayout editor = new LinearLayout(context);
+        editor.setOrientation(LinearLayout.HORIZONTAL);
+        // Compound padding includes the actual themed radio indicator width.
+        // Use its text start, rather than a second guessed column width.
+        editor.setPaddingRelative(options[PRESETS.length].getCompoundPaddingStart(),
+                0, 0, dp(context, 8));
+        input.setMinHeight(dp(context, 48));
+        editor.addView(input, new LinearLayout.LayoutParams(dp(context, 88),
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        TextView unit = new TextView(context);
+        unit.setText("s");
+        unit.setPaddingRelative(dp(context, 8), 0, 0, 0);
+        editor.addView(unit, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(context, 24), 0, dp(context, 24), 0);
+        content.addView(choices);
+        content.addView(editor);
+        ScrollView scroll = new ScrollView(context);
+        scroll.addView(content);
+        // Keep the keyboard closed until the user deliberately edits the field.
+        scroll.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        scroll.setFocusableInTouchMode(true);
+        scroll.requestFocus();
         String language = context.getResources().getConfiguration().locale.getLanguage();
         String applyLabel = "zh".equals(language) ? "套用自訂" : "Apply custom";
         final AlertDialog dialog = new AlertDialog.Builder(context).setTitle(TITLE)
-                .setSingleChoiceItems(labels, selected, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == PRESETS.length) {
-                            input.requestFocus(); input.selectAll();
-                        } else if (which >= 0 && which < PRESETS.length) {
-                            // Preserve the last applied custom value before switching presets.
-                            PreferenceManager.getDefaultSharedPreferences(context).edit()
-                                    .putString(CUSTOM_KEY, Integer.toString(remembered)).commit();
-                            apply(context, controller, PRESETS[which]); dialog.dismiss();
-                        }
-                    }
-                }).setView(input).setPositiveButton(applyLabel, null)
+                .setView(scroll).setPositiveButton(applyLabel, null)
                 .setNegativeButton(android.R.string.cancel, null).create();
+        for (int i = 0; i < options.length; i++) {
+            final int value = i < PRESETS.length ? PRESETS[i] : remembered;
+            options[i].setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    // A choice uses the saved value; editing a draft is a
+                    // separate action, committed only by Apply custom below.
+                    PreferenceManager.getDefaultSharedPreferences(context).edit()
+                            .putString(CUSTOM_KEY, Integer.toString(remembered)).commit();
+                    apply(context, controller, value);
+                    dialog.dismiss();
+                }
+            });
+        }
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             public void onShow(DialogInterface ignored) {
                 dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
@@ -123,6 +168,10 @@ public final class ViewerControls {
             }
         });
         dialog.show();
+    }
+
+    private static int dp(Context context, int value) {
+        return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
     private static int customSeconds(Context context, int fallback) {

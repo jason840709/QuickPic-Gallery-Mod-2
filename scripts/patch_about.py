@@ -18,6 +18,10 @@ REPO = "https://github.com/jason840709/QuickPic-Gallery-Mod-2"
 UPSTREAM = "https://github.com/WSTxda/QP-Gallery-Releases"
 HISTORY_KEY = "jason_version_history"
 HISTORY_LAYOUT = "quickpic_version_history"
+LATEST_TITLE = "jason_history_latest_title"
+LATEST_CONTENT = "jason_history_latest_content"
+ARCHIVE_TITLE = "jason_history_archive_title"
+NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -152,7 +156,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.5",
+        "version_number": "11.0.6",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -162,7 +166,7 @@ def replacement_strings(path):
         "faq_desc": "Usage and known limitations · FAQ.md",
         "eink_features_title": "Version development history",
         "eink_features_content": (
-            "E-Ink feature record before 11.0.0\\n\\n" + HISTORICAL_EINK_EN.replace("\n", "\\n") + "\\n\\nChanges in 11.0.0\\n"
+            "Changes in 11.0.0\\n" + HISTORICAL_EINK_EN.replace("\n", "\\n") + "\\n\\n"
             "64-bit support; tested on a 64-bit phone\\n"
             "Screensaver PNG: XPhoto first, chooser if XPhoto cannot open it\\n"
             "Phone toolbar: delete and slideshow; sharing in the menu\\n"
@@ -180,7 +184,7 @@ def replacement_strings(path):
             "faq_desc": "操作方式與已知限制 · FAQ.md",
             "eink_features_title": "版本開發紀錄",
             "eink_features_content": (
-                "11.0.0 前的 E-Ink 優化紀錄\\n\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n11.0.0 新增功能\\n"
+                "11.0.0 新增功能\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n"
                 "支援 64 位元；已用 64 位元手機經過測試\\n"
                 "螢幕保護 PNG 優先以 XPhoto 開啟；無法開啟時可選其他 App\\n"
                 "手機工具列：垃圾桶、投影片；分享移到三點選單\\n"
@@ -198,7 +202,7 @@ def replacement_strings(path):
                 "faq_desc": "操作方式与已知限制 · FAQ.md",
                 "eink_features_title": "版本开发记录",
                 "eink_features_content": (
-                    "11.0.0 前的 E-Ink 優化紀錄\\n\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n11.0.0 新增功能\\n"
+                    "11.0.0 新增功能\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n"
                     "支持 64 位；已用 64 位手机经过测试\\n"
                     "屏保 PNG 优先用 XPhoto 打开；无法打开时可选其他 App\\n"
                     "手机工具栏：垃圾桶、幻灯片；分享移到三点菜单\\n"
@@ -221,27 +225,66 @@ def replacement_strings(path):
     else:
         addition = ("\\n\\nChanges in 11.0.5\\nAdd offline Version development history to Settings and keep About concise.\\nGroup modified, created and taken date sorting. Keep slideshow and interval controls on the image toolbar; place delete, edit and share first in the menu.\\nEnter slideshow interval seconds directly and remember the last custom value separately. Adapt interval and folder edit icons to the theme and correct the folder path dialog title.")
     strings["eink_features_content"] += addition
+    if simplified:
+        latest = ("11.0.6 更新\\n幻灯片间隔改用计时器图标。自定义秒数输入框缩短、与选项文字对齐，并显示 s 单位。\\n点击自定义选项即可套用已保存的秒数；输入新值后，点击「套用自定义」保存并生效。\\n版本开发记录先显示最新更新，再列出完整记录；E-Ink 优化说明归入 11.0.0。")
+        strings.update({LATEST_TITLE: "最新版本更新内容", ARCHIVE_TITLE: "完整版本开发记录"})
+    elif chinese:
+        latest = ("11.0.6 更新\\n投影片間隔改用計時器圖示。自訂秒數輸入框縮短、與選項文字對齊，並顯示 s 單位。\\n點選自訂選項即可套用已保存的秒數；輸入新值後，按「套用自訂」保存並生效。\\n版本開發紀錄先顯示最新更新，再列出完整紀錄；E-Ink 優化說明歸入 11.0.0。")
+        strings.update({LATEST_TITLE: "最新版本更新內容", ARCHIVE_TITLE: "完整版本開發紀錄"})
+    else:
+        latest = ("Changes in 11.0.6\\nUse a timer icon for slideshow interval. Make the custom field shorter, align it with the option text and show the s unit.\\nTap Custom to apply the saved interval immediately. After editing the field, choose Apply custom to save and apply the new value.\\nShow the latest changes before the full version history, with E-Ink features included in 11.0.0.")
+        strings.update({LATEST_TITLE: "Latest version changes", ARCHIVE_TITLE: "Complete version history"})
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
     return strings
 
 
+def history_text(value):
+    """Decode Android quoting/newlines without changing the supplied prose."""
+    value = value or ""
+    if len(value) >= 2 and value.startswith('"') and value.endswith('"'):
+        value = value[1:-1]
+    return value.replace("\r\n", "\n").replace("\\n", "\n").replace('\\"', '"').replace("\\'", "'")
+
+
+def history_sections(value):
+    """Separate version headings; unversioned E-Ink notes belong to 11.0.0."""
+    value = history_text(value)
+    pattern = re.compile(r"(?m)^((?:Changes in )?(11\.\d+\.\d+)(?: (?:更新|新增功能))?)\n")
+    matches = list(pattern.finditer(value))
+    preamble = value[:matches[0].start()] if matches else value
+    preamble = re.sub(r"^(?:E-Ink feature record before 11\.0\.0|11\.0\.0 前的 E-Ink (?:優化紀錄|优化记录))\n\n", "", preamble)
+    sections = {}
+    for index, match in enumerate(matches):
+        version = match.group(2)
+        if version in sections:
+            raise ValueError("Duplicate history record for " + version)
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(value)
+        sections[version] = (match.group(1), value[match.end():end].rstrip("\n"))
+    return preamble.rstrip("\n"), sections
+
+
 def merge_history(existing, canonical):
-    """Retain every supplied record and append only missing known versions."""
-    existing = existing or ""
-    if len(existing) >= 2 and existing.startswith('"') and existing.endswith('"'):
-        existing = existing[1:-1]
-    existing = existing.replace("\r\n", "\n").replace("\n", "\\n")
-    sections = re.split(r"\\n\\n(?=(?:Changes in 11\.\d+\.\d+|11\.\d+\.\d+ (?:更新|新增功能))\\n)", canonical)
-    if not existing.strip():
-        existing = canonical
-    else:
-        for section in sections[1:]:
-            version = re.search(r"11\.\d+\.\d+", section).group()
-            heading = r"(?:^|\\n)(?:Changes in )?" + re.escape(version) + r"(?: 更新| 新增功能)?\\n"
-            if not re.search(heading, existing):
-                existing += "\\n\\n" + section
-    # Quoting preserves indentation and apostrophes through aapt round-trips.
-    return '"' + re.sub(r'(?<!\\)"', r'\\"', existing) + '"'
+    """Regroup E-Ink under 11.0.0 and retain every supplied version body.
+
+    The user explicitly requested this presentation change in 11.0.6. Existing
+    body text and unknown future versions survive; only the obsolete separate
+    pre-11.0.0 heading is removed. Missing releases use the canonical record.
+    """
+    preamble, supplied = history_sections(existing)
+    _, known = history_sections(canonical)
+    sections = dict(known)
+    sections.update(supplied)
+    if preamble:
+        heading, body = sections["11.0.0"]
+        if preamble not in body:
+            body = preamble + "\n\n" + body
+        sections["11.0.0"] = (heading, body)
+    text = "\n\n".join(heading + "\n" + body for version, (heading, body) in
+                         sorted(sections.items(), key=lambda pair: tuple(map(int, pair[0].split(".")))))
+    # Quoting preserves indentation, apostrophes and literal quotes through aapt.
+    return '"' + text.replace("\n", "\\n").replace('"', '\\"') + '"'
 
 
 def normalize_strings(text, path):
@@ -254,20 +297,24 @@ def normalize_strings(text, path):
         value = replacements[name]
         if name == "eink_features_content":
             value = merge_history(ET.fromstring(match.group()).text, value)
+        elif name == LATEST_CONTENT:
+            value = '"' + value.replace('"', '\\"') + '"'
         return "<string" + match.group(1).rstrip() + ">" + escape(value) + "</string>"
 
     # apktool emits empty resource values as self-closing elements on a second
     # decode. Match both forms without swallowing the next string element.
     result = re.sub(r'<string\b([^>]*\bname="([^"]+)"[^>]*?)(?:\s*/>|>(.*?)</string>)',
                     replace, text, flags=re.S)
-    if path.parent.name in ("values-zh", "values-zh-rCN", "values-zh-rTW"):
-        names = {n.get("name") for n in ET.fromstring(result)}
+    names = {n.get("name") for n in ET.fromstring(result)}
+    if "eink_features_content" in names or path.parent.name in ("values-zh", "values-zh-rCN", "values-zh-rTW"):
         missing = []
-        for name in ("eink_features_title", "eink_features_content"):
+        for name in ("eink_features_title", "eink_features_content", LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE):
             if name not in names:
                 value = replacements[name]
                 if name == "eink_features_content":
                     value = merge_history("", value)
+                elif name == LATEST_CONTENT:
+                    value = '"' + value.replace('"', '\\"') + '"'
                 missing.append('    <string name="' + name + '">' + escape(value) + '</string>\n')
         result = result.replace("</resources>", "".join(missing) + "</resources>")
     return result
@@ -288,17 +335,32 @@ def history_block(root):
 
 def history_layout(text, existing=None):
     block = history_block(ET.fromstring(text))
-    if block is not None:
-        block = deepcopy(block)
-        block.tail = None
-        ET.indent(block, space="    ")
-        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(block, encoding="unicode") + "\n"
-    if existing is None:
-        raise ValueError("Missing original history block and dedicated history layout")
-    refs = {n.get(A + "text") for n in ET.fromstring(existing).iter()}
-    if not {"@string/eink_features_title", "@string/eink_features_content"} <= refs:
+    if block is None:
+        if existing is None:
+            raise ValueError("Missing original history block and dedicated history layout")
+        block = ET.fromstring(existing)
+    refs = {n.get(A + "text") for n in block.iter()}
+    old_refs = {"@string/eink_features_title", "@string/eink_features_content"}
+    new_refs = {"@string/" + key for key in NEW_HISTORY_STRINGS} | {"@string/eink_features_content"}
+    if not (old_refs <= refs or new_refs <= refs):
         raise ValueError("Incomplete dedicated history layout")
-    return existing
+    if any(n.tag != "TextView" for n in block):
+        raise ValueError("Unexpected non-text history layout child")
+    title = next(n for n in block if n.tag == "TextView")
+    body = next(n for n in block if n.get(A + "text") == "@string/eink_features_content")
+    result = ET.Element(block.tag, dict(block.attrib))
+    for key, template, top in ((LATEST_TITLE, title, None), (LATEST_CONTENT, body, "12dip"),
+                               (ARCHIVE_TITLE, title, "24dip"), ("eink_features_content", body, "12dip")):
+        node = deepcopy(template)
+        node.tail = None
+        node.set(A + "text", "@string/" + key)
+        if top:
+            node.set(A + "layout_marginTop", top)
+        else:
+            node.attrib.pop(A + "layout_marginTop", None)
+        result.append(node)
+    ET.indent(result, space="    ")
+    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(result, encoding="unicode") + "\n"
 
 
 def normalize_header(text, history_copied=False):
@@ -340,8 +402,8 @@ def plan(root):
         old_tree, new_tree = ET.fromstring(text), ET.fromstring(result)
         old_names = [n.get("name") for n in old_tree]
         new_names = [n.get("name") for n in new_tree]
-        # Locale overrides reuse base resource IDs; no new string ID is allowed.
-        assert set(new_names) <= resource_names, path
+        # Existing IDs stay in place; only the three new section strings may be added.
+        assert set(new_names) <= resource_names | NEW_HISTORY_STRINGS, path
         assert old_names == [name for name in new_names if name in old_names], path
         old_launcher = next(n.text for n in old_tree if n.get("name") == "app_name")
         assert next(n.text for n in new_tree if n.get("name") == "app_name") == old_launcher, path
