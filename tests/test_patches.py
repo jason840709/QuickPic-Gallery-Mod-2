@@ -56,7 +56,7 @@ class BuildTests(unittest.TestCase):
 
     def test_formal_release_identity(self):
         self.assertEqual((build.PACKAGE, build.VERSION_NAME, build.VERSION_CODE),
-                         ("io.github.jason840709.quickpic", "11.0.4", 11004001))
+                         ("io.github.jason840709.quickpic", "11.0.5", 11005001))
 
     def test_native_output_rejected(self):
         import zipfile
@@ -94,7 +94,7 @@ class FeatureTests(unittest.TestCase):
     def test_about_preserves_eink_history_and_separates_new_features(self):
         values = patch_about.replacement_strings(Path("res/values-zh-rTW/strings.xml"))
         body = values["eink_features_content"]
-        self.assertEqual(values["eink_features_title"], "E-Ink 優化版本功能說明")
+        self.assertEqual(values["eink_features_title"], "版本開發紀錄")
         self.assertIn(patch_about.HISTORICAL_EINK_TW.replace("\n", "\\n"), body)
         self.assertTrue(body.startswith("11.0.0 前的 E-Ink 優化紀錄"))
         self.assertIn("11.0.0 新增功能", body)
@@ -112,7 +112,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual([n.get("name") for n in root], ["paypal", "unrelated", "github_url", "version_number"])
         self.assertEqual(root[1].text, "keep me")
         self.assertEqual(root[2].text, patch_about.REPO + "/blob/main/README.md")
-        self.assertEqual(root[3].text, "11.0.4")
+        self.assertEqual(root[3].text, "11.0.5")
         self.assertEqual(patch_about.normalize_strings(result, path), result)
 
     def test_xphoto_only_changes_open_method(self):
@@ -139,11 +139,11 @@ class FeatureTests(unittest.TestCase):
     def test_viewer_menu_order_and_overflow(self):
         with tempfile.TemporaryDirectory() as temp:
             path = write(Path(temp), "menu.xml", '<menu xmlns:android="http://schemas.android.com/apk/res/android">' +
-                         ''.join('<item android:id="@id/' + name + '" />' for name in ("share", "edit", "delete", "rotate", "slideshow")) + '</menu>')
+                         ''.join('<item android:id="@id/' + name + '" />' for name in ("share", "edit", "delete", "rotate", "slideshow", "set_as")) + '</menu>')
             patch_viewer.patch_menu(path)
             root = ET.parse(path).getroot()
-            self.assertEqual([node.get(A + "id") for node in list(root)[:2]], ["@id/delete", "@id/slideshow"])
-            self.assertEqual([node.get(A + "showAsAction") for node in root], ["always", "always", "never", "never", "never"])
+            self.assertEqual([node.get(A + "id") for node in list(root)[:2]], ["@id/slideshow", "@id/delete"])
+            self.assertEqual([node.get(A + "showAsAction") for node in root], ["always", "never", "never", "never", None, "never"])
 
     def test_about_preserves_other_preferences(self):
         original = '<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">\n<Preference android:key="storage" android:title="Keep storage" />\n<PreferenceScreen android:title="@string/about"><Preference android:layout="@layout/about_version" /><Preference android:title="@string/caio_name"><intent android:data="https://old.invalid/contact" /></Preference></PreferenceScreen>\n<Preference android:key="viewer" android:title="Keep viewer" />\n</PreferenceScreen>'
@@ -192,7 +192,7 @@ class NormalizeTests(unittest.TestCase):
             self.assertIn("QuickPic-Screensaver", normalized)
             self.assertIn("screensaver-1860x2480-", normalized)
             self.assertNotIn(old.replace(".", "/"), normalized)
-            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.4")
+            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.5")
             self.assertIn("QuickPic-Gallery-Mod-2/releases", (root / "res/xml/main_pref.xml").read_text())
             self.assertEqual(ET.parse(root / "res/values/strings.xml").getroot()[0].text, "快圖")
 

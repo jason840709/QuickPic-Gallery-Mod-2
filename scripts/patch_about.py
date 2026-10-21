@@ -16,6 +16,8 @@ A = "{" + NS + "}"
 ET.register_namespace("android", NS)
 REPO = "https://github.com/jason840709/QuickPic-Gallery-Mod-2"
 UPSTREAM = "https://github.com/WSTxda/QP-Gallery-Releases"
+HISTORY_KEY = "jason_version_history"
+HISTORY_LAYOUT = "quickpic_version_history"
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -46,6 +48,26 @@ def preference(icon, title, summary=None, key=None, url=None):
             A + "action": "android.intent.action.VIEW", A + "data": url,
         })
     return node
+
+
+def screen_span(text, attribute, value):
+    opening = re.search(r'<PreferenceScreen\b[^>]*android:' + re.escape(attribute)
+                        + r'="' + re.escape(value) + r'"[^>]*>', text)
+    if opening is None:
+        raise ValueError("Cannot locate PreferenceScreen " + value)
+    depth = 1
+    for tag in re.finditer(r"</?PreferenceScreen\b[^>]*>", text[opening.end():]):
+        token = tag.group()
+        depth += -1 if token.startswith("</") else (0 if token.endswith("/>") else 1)
+        if depth == 0:
+            return opening.start(), opening.end() + tag.end()
+    raise ValueError("Unbalanced PreferenceScreen " + value)
+
+
+def screen_xml(screen):
+    ET.indent(screen, space="    ", level=1)
+    return ET.tostring(screen, encoding="unicode").replace(
+        ' xmlns:android="' + NS + '"', "", 1)
 
 
 def normalize_preferences(text):
@@ -95,26 +117,29 @@ def normalize_preferences(text):
     credits.extend(historical)
     new_about.append(preference("ic_faq", "@string/faq", "@string/faq_desc",
                                 "jason_faq", "@string/faq_url"))
+    history = ET.Element("PreferenceScreen", {
+        A + "icon": "@drawable/ic_updates",
+        A + "title": "@string/eink_features_title",
+        A + "key": HISTORY_KEY,
+    })
+    ET.SubElement(history, "Preference", {
+        A + "layout": "@layout/" + HISTORY_LAYOUT,
+        A + "selectable": "false",
+        A + "key": "jason_version_history_content",
+    })
     # Locate only the original About span. Keep every other preference byte-for-
     # byte intact, including API-specific security/storage/viewer differences.
-    opening = re.search(r'<PreferenceScreen\b[^>]*android:title="@string/about"[^>]*>', text)
-    if opening is None:
-        raise ValueError("Cannot locate About XML span")
-    depth = 1
-    ending = None
-    for tag in re.finditer(r"</?PreferenceScreen\b[^>]*>", text[opening.end():]):
-        token = tag.group()
-        depth += -1 if token.startswith("</") else (0 if token.endswith("/>") else 1)
-        if depth == 0:
-            ending = opening.end() + tag.end()
-            break
-    if ending is None:
-        raise ValueError("Unbalanced About PreferenceScreen")
-    ET.indent(new_about, space="    ", level=1)
-    replacement = ET.tostring(new_about, encoding="unicode")
-    # Namespace already belongs to the existing root.
-    replacement = replacement.replace(' xmlns:android="' + NS + '"', "", 1)
-    return text[:opening.start()] + replacement + text[ending:]
+    existing = [n for n in root if n.get(A + "key") == HISTORY_KEY]
+    if len(existing) > 1:
+        raise ValueError("Duplicate development history screens")
+    if existing:
+        start, ending = screen_span(text, "key", HISTORY_KEY)
+        if text[:start].endswith("\n    "):
+            start -= len("\n    ")
+        text = text[:start] + text[ending:]
+    start, ending = screen_span(text, "title", "@string/about")
+    replacement = screen_xml(new_about) + "\n    " + screen_xml(history)
+    return text[:start] + replacement + text[ending:]
 
 
 # Existing E-Ink feature record, retained from the supplied derivative.
@@ -127,7 +152,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.4",
+        "version_number": "11.0.5",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -135,7 +160,7 @@ def replacement_strings(path):
         "about_desc": "Developer, sources and FAQ",
         "contributors_desc": "Contributors and upstream sources",
         "faq_desc": "Usage and known limitations · FAQ.md",
-        "eink_features_title": "E-Ink Optimized Features",
+        "eink_features_title": "Version development history",
         "eink_features_content": (
             "E-Ink feature record before 11.0.0\\n\\n" + HISTORICAL_EINK_EN.replace("\n", "\\n") + "\\n\\nChanges in 11.0.0\\n"
             "64-bit support; tested on a 64-bit phone\\n"
@@ -153,7 +178,7 @@ def replacement_strings(path):
             "about_desc": "開發者、來源與常見問題",
             "contributors_desc": "貢獻者與上游來源",
             "faq_desc": "操作方式與已知限制 · FAQ.md",
-            "eink_features_title": "E-Ink 優化版本功能說明",
+            "eink_features_title": "版本開發紀錄",
             "eink_features_content": (
                 "11.0.0 前的 E-Ink 優化紀錄\\n\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n11.0.0 新增功能\\n"
                 "支援 64 位元；已用 64 位元手機經過測試\\n"
@@ -171,7 +196,7 @@ def replacement_strings(path):
                 "about_desc": "开发者、来源与常见问题",
                 "contributors_desc": "贡献者与上游来源",
                 "faq_desc": "操作方式与已知限制 · FAQ.md",
-                "eink_features_title": "E-Ink 优化版本功能说明",
+                "eink_features_title": "版本开发记录",
                 "eink_features_content": (
                     "11.0.0 前的 E-Ink 優化紀錄\\n\\n" + HISTORICAL_EINK_TW.replace("\n", "\\n") + "\\n\\n11.0.0 新增功能\\n"
                     "支持 64 位；已用 64 位手机经过测试\\n"
@@ -189,8 +214,34 @@ def replacement_strings(path):
     else:
         addition = ("\\n\\nChanges in 11.0.4\\nPrioritize new and recently changed folders; reuse normal and hidden folder path caches.\\nSeparate creation (added) and modification sorting. Existing files without a reliable creation time initially use modification time; later additions retain their first observed time.")
     strings["eink_features_content"] += addition
+    if simplified:
+        addition = ("\\n\\n11.0.5 更新\\n设置页面新增「版本开发记录」，可离线查看完整 E-Ink 说明与历代更新；关于页面保留应用与开发者等基本信息。\\n日期排序集中显示修改、创建与拍摄日期。图片工具栏保留幻灯片和间隔按钮；删除、编辑和分享排在菜单前方。\\n「幻灯片间隔」可直接输入秒数，并单独记住上次自定义值；间隔与路径编辑图标随主题调整，文件夹路径编辑窗口显示正确标题。")
+    elif chinese:
+        addition = ("\\n\\n11.0.5 更新\\n設定頁面新增「版本開發紀錄」，可離線查看完整 E-Ink 說明與歷代更新；關於頁面保留 App 與開發者等基本資訊。\\n日期排序集中顯示修改、建立與拍攝日期。圖片工具列保留投影片和間隔按鈕；刪除、編輯和分享排在選單前方。\\n「投影片間隔」可直接輸入秒數，並另外記住上次自訂值；間隔與路徑編輯圖示隨佈景調整，資料夾路徑編輯視窗顯示正確標題。")
+    else:
+        addition = ("\\n\\nChanges in 11.0.5\\nAdd offline Version development history to Settings and keep About concise.\\nGroup modified, created and taken date sorting. Keep slideshow and interval controls on the image toolbar; place delete, edit and share first in the menu.\\nEnter slideshow interval seconds directly and remember the last custom value separately. Adapt interval and folder edit icons to the theme and correct the folder path dialog title.")
+    strings["eink_features_content"] += addition
     strings.update({key: "" for key in RETIRED_STRINGS})
     return strings
+
+
+def merge_history(existing, canonical):
+    """Retain every supplied record and append only missing known versions."""
+    existing = existing or ""
+    if len(existing) >= 2 and existing.startswith('"') and existing.endswith('"'):
+        existing = existing[1:-1]
+    existing = existing.replace("\r\n", "\n").replace("\n", "\\n")
+    sections = re.split(r"\\n\\n(?=(?:Changes in 11\.\d+\.\d+|11\.\d+\.\d+ (?:更新|新增功能))\\n)", canonical)
+    if not existing.strip():
+        existing = canonical
+    else:
+        for section in sections[1:]:
+            version = re.search(r"11\.\d+\.\d+", section).group()
+            heading = r"(?:^|\\n)(?:Changes in )?" + re.escape(version) + r"(?: 更新| 新增功能)?\\n"
+            if not re.search(heading, existing):
+                existing += "\\n\\n" + section
+    # Quoting preserves indentation and apostrophes through aapt round-trips.
+    return '"' + re.sub(r'(?<!\\)"', r'\\"', existing) + '"'
 
 
 def normalize_strings(text, path):
@@ -200,23 +251,73 @@ def normalize_strings(text, path):
         name = match.group(2)
         if name not in replacements:
             return match.group()
-        return "<string" + match.group(1).rstrip() + ">" + escape(replacements[name]) + "</string>"
+        value = replacements[name]
+        if name == "eink_features_content":
+            value = merge_history(ET.fromstring(match.group()).text, value)
+        return "<string" + match.group(1).rstrip() + ">" + escape(value) + "</string>"
 
     # apktool emits empty resource values as self-closing elements on a second
     # decode. Match both forms without swallowing the next string element.
-    return re.sub(r'<string\b([^>]*\bname="([^"]+)"[^>]*?)(?:\s*/>|>(.*?)</string>)',
-                  replace, text, flags=re.S)
+    result = re.sub(r'<string\b([^>]*\bname="([^"]+)"[^>]*?)(?:\s*/>|>(.*?)</string>)',
+                    replace, text, flags=re.S)
+    if path.parent.name in ("values-zh", "values-zh-rCN", "values-zh-rTW"):
+        names = {n.get("name") for n in ET.fromstring(result)}
+        missing = []
+        for name in ("eink_features_title", "eink_features_content"):
+            if name not in names:
+                value = replacements[name]
+                if name == "eink_features_content":
+                    value = merge_history("", value)
+                missing.append('    <string name="' + name + '">' + escape(value) + '</string>\n')
+        result = result.replace("</resources>", "".join(missing) + "</resources>")
+    return result
 
 
-def normalize_header(text):
+def history_block(root):
+    blocks = [n for n in root if any(
+        child.get(A + "text") == "@string/eink_features_content" for child in n.iter())]
+    if len(blocks) > 1:
+        raise ValueError("Unexpected duplicate About history blocks")
+    if blocks:
+        refs = {n.get(A + "text") for n in blocks[0].iter()}
+        if not {"@string/eink_features_title", "@string/eink_features_content"} <= refs:
+            raise ValueError("Incomplete About history block")
+        return blocks[0]
+    return None
+
+
+def history_layout(text, existing=None):
+    block = history_block(ET.fromstring(text))
+    if block is not None:
+        block = deepcopy(block)
+        block.tail = None
+        ET.indent(block, space="    ")
+        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(block, encoding="unicode") + "\n"
+    if existing is None:
+        raise ValueError("Missing original history block and dedicated history layout")
+    refs = {n.get(A + "text") for n in ET.fromstring(existing).iter()}
+    if not {"@string/eink_features_title", "@string/eink_features_content"} <= refs:
+        raise ValueError("Incomplete dedicated history layout")
+    return existing
+
+
+def normalize_header(text, history_copied=False):
     root = ET.fromstring(text)
     targets = [n for n in root.iter() if n.get(A + "text") == "@string/build_type"]
     if len(targets) != 1:
         raise ValueError("Unexpected About header build_type layout")
-    # The old beta label forced ALL CAPS; retain Jason Chen capitalization.
-    return re.sub(r'(<TextView\b[^>]*android:text="@string/build_type"[^>]*?)'
-                  r'android:textAllCaps="(?:true|false)"',
-                  r'\1android:textAllCaps="false"', text)
+    block = history_block(root)
+    if block is not None:
+        if not history_copied:
+            raise ValueError("Copy development history before shortening About")
+        index = list(root).index(block)
+        root.remove(block)
+        # Keep the divider before the old history block as the credits separator.
+        if index < len(root) and root[index].tag == "include" and root[index].get("layout") == "@layout/pref_divider":
+            root.remove(root[index])
+    targets[0].set(A + "textAllCaps", "false")
+    ET.indent(root, space="    ")
+    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 
 
 def plan(root):
@@ -229,12 +330,19 @@ def plan(root):
         changes[path] = result
     if not changes:
         raise ValueError("No main_pref.xml resources")
-    for path in sorted((root / "res").glob("values*/strings.xml")):
+    string_paths = sorted((root / "res").glob("values*/strings.xml"))
+    resource_names = {n.get("name") for path in string_paths
+                      for n in ET.fromstring(path.read_text())}
+    for path in string_paths:
         text = path.read_text()
         result = normalize_strings(text, path)
         assert normalize_strings(result, path) == result, path
         old_tree, new_tree = ET.fromstring(text), ET.fromstring(result)
-        assert [n.get("name") for n in old_tree] == [n.get("name") for n in new_tree], path
+        old_names = [n.get("name") for n in old_tree]
+        new_names = [n.get("name") for n in new_tree]
+        # Locale overrides reuse base resource IDs; no new string ID is allowed.
+        assert set(new_names) <= resource_names, path
+        assert old_names == [name for name in new_names if name in old_names], path
         old_launcher = next(n.text for n in old_tree if n.get("name") == "app_name")
         assert next(n.text for n in new_tree if n.get("name") == "app_name") == old_launcher, path
         for node in new_tree:
@@ -246,11 +354,19 @@ def plan(root):
         if text != result:
             changes[path] = result
     path = root / "res/layout/about_version.xml"
-    changes[path] = normalize_header(path.read_text())
+    original_header = path.read_text()
+    history_path = path.with_name(HISTORY_LAYOUT + ".xml")
+    changes[history_path] = history_layout(original_header,
+        history_path.read_text() if history_path.exists() else None)
+    changes[path] = normalize_header(original_header, history_copied=True)
+    assert normalize_header(changes[path]) == changes[path], path
     for path, result in changes.items():
         parsed = ET.fromstring(result)
         if path.name == "main_pref.xml":
             about = next(n for n in parsed if n.get(A + "title") == "@string/about")
+            history = next(n for n in parsed if n.get(A + "key") == HISTORY_KEY)
+            assert list(parsed).index(history) == list(parsed).index(about) + 1, path
+            assert not any(n.tag == "intent" for n in history.iter()), path
             for node in about.iter():
                 assert not FORBIDDEN_URL.search(node.get(A + "data", "")), path
             assert all(n.get(A + "title") != "@string/paypal" for n in about.iter()), path

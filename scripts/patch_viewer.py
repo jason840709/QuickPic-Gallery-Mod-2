@@ -53,14 +53,16 @@ def patch_menu(path):
     root = tree.getroot()
     items = list(root)
     by_id = {item.get(ANDROID + "id"): item for item in items}
-    first = [by_id["@id/delete"], by_id["@id/slideshow"]]
+    first = [by_id["@id/slideshow"], by_id["@id/delete"], by_id["@id/edit"], by_id["@id/share"], by_id["@id/set_as"]]
     for item in items:
         item_id = item.get(ANDROID + "id")
-        if item_id in ("@id/delete", "@id/slideshow"):
+        if item_id == "@id/slideshow":
             item.set(ANDROID + "showAsAction", "always")
-        elif item_id in ("@id/share", "@id/edit", "@id/rotate"):
+        elif item_id in ("@id/delete", "@id/share", "@id/edit", "@id/rotate"):
             item.set(ANDROID + "showAsAction", "never")
     root[:] = first + [item for item in items if item not in first]
+    for index, item in enumerate(root):
+        item.set(ANDROID + "orderInCategory", "0" if item.get(ANDROID + "id") == "@id/slideshow" else str(20 + index))
     ET.indent(tree, space="    ")
     tree.write(path, encoding="utf-8", xml_declaration=True)
 
@@ -75,6 +77,13 @@ def patch(root):
     path = root / "res/menu/picture.xml"
     patch_menu(path)
     paths.append(str(path.relative_to(root)))
+    for path in sorted((root / "res").glob("values*/strings.xml")):
+        text = path.read_text()
+        folder = path.parent.name
+        label = ("投影片間隔" if folder.startswith("values-zh") and folder not in ("values-zh", "values-zh-rCN")
+                 else "幻灯片间隔" if folder.startswith("values-zh") else "Slideshow interval")
+        text, count = re.subn(r'(<string name="slideshow_interval">)[^<]*(</string>)',lambda m:m[1]+label+m[2],text)
+        if count: path.write_text(text); paths.append(str(path.relative_to(root)))
     return paths
 
 

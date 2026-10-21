@@ -204,6 +204,19 @@ def patch(decoded_root):
         if count:
             changes[path] = updated
 
+    menu_path = root / 'res/menu/sort.xml'
+    if menu_path.exists():
+        import xml.etree.ElementTree as ET
+        namespace = '{http://schemas.android.com/apk/res/android}'
+        tree = ET.parse(menu_path)
+        positions = {'@id/sort_default':0, '@id/sort_by_name':10, '@id/sort_by_date':20,
+                     '@id/sort_by_exif':22, '@id/sort_by_size':30, '@id/sort_by_path':40}
+        for item in tree.getroot():
+            value = positions.get(item.get(namespace + 'id'))
+            if value is not None: item.set(namespace + 'orderInCategory', str(value))
+        ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
+        changes[menu_path] = ET.tostring(tree.getroot(), encoding='unicode')
+
     # Validate every source seam before writing any patch target.
     for path, text in changes.items():
         path.write_text(text, encoding='utf-8')

@@ -60,9 +60,10 @@ public final class DateSort {
         if (!dates) return allowed;
         MenuItem modified = menu.findItem(MODIFIED_ID);
         if (menu.findItem(CREATED_ID) == null) {
-            menu.add(0, CREATED_ID, modified == null ? 0 : modified.getOrder(),
+            menu.add(0, CREATED_ID, modified == null ? 21 : modified.getOrder() + 1,
                     createdLabel(context));
         }
+        MenuLayout.order(menu, new int[]{0x7f090073, 0x7f090074, MODIFIED_ID, CREATED_ID, 0x7f090076, 0x7f090077, 0x7f090078});
         for (int id : allowed) if (id == CREATED_ID) return allowed;
         int[] expanded = Arrays.copyOf(allowed, allowed.length + 1);
         expanded[allowed.length] = CREATED_ID;

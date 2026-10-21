@@ -127,3 +127,7 @@ python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /p
 ## 掃描與日期排序檢查
 
 執行 `python tests/media_dates_host/run.py` 與 `python tests/date_sort_host/run.py` 驗證日期索引和排序。掃描檢查使用 `python tests/scan_priority_host/run.py --decoded <最終APK的解碼目錄> --baseline-decoded <11.0.3解碼目錄> --work-dir <工作目錄> --output-json <報告>`，涵蓋實際控制流與佇列案例。主機 API 替身、DEX 成員核對及手機操作各自記錄；正式發布前仍須確認同一 APK 在 Android 正常啟動。
+
+## 看圖與設定介面檢查
+
+`python tests/viewer_controls_host/run.py` 使用實際輔助程式測試工具列、主題與自訂秒數；`python tests/folder_path_host/run.py --decoded <原APK解碼目錄> --work-dir <工作目錄>`核對路徑編輯補丁；`python tests/about_history_host/run.py --decoded <原APK解碼目錄>`檢查離線歷史頁與完整舊文字。最終APK仍須核對原有public資源ID、新layout連結與DEX方法簽名；手機排版和鍵盤需另外驗收。

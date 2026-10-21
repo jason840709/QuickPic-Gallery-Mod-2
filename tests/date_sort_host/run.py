@@ -26,6 +26,7 @@ SOURCES = {
 'android/view/MenuItem.java': '''package android.view;public interface MenuItem {int getItemId();int getOrder();MenuItem setTitle(CharSequence title);}''',
 'com/alensw/jni/MediaDates.java': '''package com.alensw.jni;import java.io.File;import java.util.*;public class MediaDates {public static final Map<String,Long>C=new HashMap<>(),M=new HashMap<>();public static final List<String>calls=new ArrayList<>();public static long created(File f){calls.add(f.getPath());return C.getOrDefault(f.getPath(),0L);}public static long modified(File f){calls.add(f.getPath());return M.getOrDefault(f.getPath(),0L);}}''',
 'com/alensw/b/b/b.java': '''package com.alensw.b.b;import java.util.*;public class b {public static Comparator<Object>a=(x,y)->{String s=x.toString(),t=y.toString();java.util.regex.Matcher m=java.util.regex.Pattern.compile("(.*?)([0-9]+)$").matcher(s),n=java.util.regex.Pattern.compile("(.*?)([0-9]+)$").matcher(t);if(m.matches()&&n.matches()&&m.group(1).equals(n.group(1)))return Integer.compare(Integer.parseInt(m.group(2)),Integer.parseInt(n.group(2)));return s.compareToIgnoreCase(t);};}''',
+'com/alensw/b/g/b.java': '''package com.alensw.b.g; public abstract class b implements android.view.Menu {public final java.util.ArrayList<android.view.MenuItem>e=new java.util.ArrayList<>();}''',
 'DateSortHarness.java': r'''
 import com.alensw.jni.DateSort;
 import com.alensw.jni.MediaDates;
@@ -39,7 +40,7 @@ public class DateSortHarness {
   public static class Folder extends File {public int d,g;Folder(String n,int pin,int kind){super("/folders/"+n);d=pin<<8;g=kind;}}
   public static class Common {final String name,path,uri;final long modified,taken;Common(String n,String p,String u,long m,long t){name=n;path=p;uri=u;modified=m;taken=t;}public String a(){return name;}public String j(){return path;}public long e(){return modified;}public long f(){return taken;}public android.net.Uri i(){return android.net.Uri.parse(uri);}}
   static class Item implements android.view.MenuItem {int id,order;String title;Item(int i,int o,String t){id=i;order=o;title=t;}public int getItemId(){return id;}public int getOrder(){return order;}public android.view.MenuItem setTitle(CharSequence t){title=t.toString();return this;}}
-  static class Menu implements android.view.Menu {Map<Integer,Item>items=new LinkedHashMap<>();public android.view.MenuItem findItem(int i){return items.get(i);}public android.view.MenuItem add(int g,int i,int o,CharSequence t){Item a=new Item(i,o,t.toString());items.put(i,a);return a;}}
+  static class Menu extends com.alensw.b.g.b {Map<Integer,Item>items=new LinkedHashMap<>();public android.view.MenuItem findItem(int i){return items.get(i);}public android.view.MenuItem add(int g,int i,int o,CharSequence t){Item a=new Item(i,o,t.toString());items.put(i,a);e.add(a);return a;}}
   static ArrayList<Object> list(Object... a){return new ArrayList<>(Arrays.asList(a));}
   static void time(String p,long c,long m){MediaDates.C.put(p,c);MediaDates.M.put(p,m);}
   public static void main(String[] args){
@@ -107,6 +108,9 @@ public class DateSortHarness {
     for(int mode:new int[]{2,4,7,8})check(DateSort.commonComparator(common,mode,OLD)==OLD,"old common comparator retained "+mode);
     Menu menu=new Menu();menu.add(0,0x7f090075,0,"按修改日期");int[]allowed={0x7f090074,0x7f090075};int[]expanded=DateSort.prepareMenu(new android.content.Context(),menu,allowed);
     check(expanded.length==3&&menu.findItem(DateSort.CREATED_ID)!=null,"creation item survives menu whitelist");
+    Menu grouped=new Menu();for(int id:new int[]{0x7f090074,0x7f090075,0x7f090076,0x7f090077,0x7f090078})grouped.add(0,id,0,"item");
+    DateSort.prepareMenu(new android.content.Context(),grouped,new int[]{0x7f090074,0x7f090075,0x7f090076,0x7f090077,0x7f090078});
+    check(grouped.e.get(1).getItemId()==0x7f090075&&grouped.e.get(2).getItemId()==DateSort.CREATED_ID&&grouped.e.get(3).getItemId()==0x7f090076,"all three date choices consecutive in actual legacy backing list");
     check(menu.items.get(0x7f090075).title.equals("按修改日期"),"patched modified translation is retained");
     check(DateSort.prepareMenu(new android.content.Context(),menu,expanded).length==3&&menu.items.size()==2,"menu augmentation is idempotent");
     System.out.println("DateSort host behavioral assertions passed: "+assertions);
@@ -121,6 +125,7 @@ def run(root=ROOT):
         work = Path(temporary)
         sources = dict(SOURCES)
         sources['com/alensw/jni/DateSort.java'] = (root / 'src/com/alensw/jni/DateSort.java').read_text()
+        sources['com/alensw/jni/MenuLayout.java'] = (root / 'src/com/alensw/jni/MenuLayout.java').read_text()
         paths = []
         for relative, source in sources.items():
             path = work / relative

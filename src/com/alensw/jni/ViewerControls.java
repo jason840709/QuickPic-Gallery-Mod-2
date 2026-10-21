@@ -4,6 +4,9 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.InputType;
@@ -19,6 +22,7 @@ import java.lang.reflect.Method;
 public final class ViewerControls {
     private static final String TAG = "QuickPicViewer";
     private static final String KEY = "slideshow_interval";
+    private static final String CUSTOM_KEY = "slideshow_custom_interval";
     private static final int DELETE = 0x7f09004e;
     private static final int SLIDESHOW = 0x7f090052;
     private static final int SHARE = 0x7f09000a;
@@ -40,7 +44,7 @@ public final class ViewerControls {
         action(context, menu.findItem(SHARE), MenuItem.SHOW_AS_ACTION_NEVER);
         action(context, menu.findItem(EDIT), MenuItem.SHOW_AS_ACTION_NEVER);
         action(context, menu.findItem(ROTATE), MenuItem.SHOW_AS_ACTION_NEVER);
-        action(context, menu.findItem(DELETE), MenuItem.SHOW_AS_ACTION_ALWAYS);
+        action(context, menu.findItem(DELETE), MenuItem.SHOW_AS_ACTION_NEVER);
         MenuItem slideshow = menu.findItem(SLIDESHOW);
         action(context, slideshow, MenuItem.SHOW_AS_ACTION_ALWAYS);
         if (slideshow == null) {
@@ -48,10 +52,17 @@ public final class ViewerControls {
             return;
         }
         MenuItem interval = menu.findItem(INTERVAL);
-        if (interval == null) interval = menu.add(Menu.NONE, INTERVAL, 2, TITLE);
-        interval.setIcon(ICON);
-        boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        action(context, interval, tablet ? MenuItem.SHOW_AS_ACTION_ALWAYS : MenuItem.SHOW_AS_ACTION_NEVER);
+        if (interval == null) interval = menu.add(Menu.NONE, INTERVAL, 1, TITLE);
+        interval.setTitle(TITLE);
+        Drawable icon = context.getResources().getDrawable(ICON).mutate();
+        TypedValue tint = new TypedValue();
+        if (context.getTheme().resolveAttribute(0x7f010001, tint, true)) {
+            int color = tint.resourceId != 0 ? context.getResources().getColor(tint.resourceId) : tint.data;
+            icon.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        }
+        interval.setIcon(icon);
+        MenuLayout.order(menu, new int[]{SLIDESHOW, INTERVAL, DELETE, EDIT, SHARE});
+        action(context, interval, MenuItem.SHOW_AS_ACTION_ALWAYS);
     }
 
     private static void action(Context context, MenuItem item, int mode) {
@@ -67,32 +78,34 @@ public final class ViewerControls {
 
     public static void showDialog(final Context context, final Object controller) {
         final int current = seconds(context);
+        final int remembered = customSeconds(context, current);
+        final EditText input = new EditText(context);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText(Integer.toString(remembered));
+        input.setHint("1–86400 s");
         CharSequence[] labels = new CharSequence[PRESETS.length + 1];
         int selected = PRESETS.length;
         for (int i = 0; i < PRESETS.length; i++) {
             labels[i] = PRESETS[i] + " s";
             if (PRESETS[i] == current) selected = i;
         }
-        labels[PRESETS.length] = context.getString(CUSTOM) + " (" + current + " s)";
-        new AlertDialog.Builder(context).setTitle(TITLE)
+        labels[PRESETS.length] = context.getString(CUSTOM) + " (" + remembered + " s)";
+        String language = context.getResources().getConfiguration().locale.getLanguage();
+        String applyLabel = "zh".equals(language) ? "套用自訂" : "Apply custom";
+        final AlertDialog dialog = new AlertDialog.Builder(context).setTitle(TITLE)
                 .setSingleChoiceItems(labels, selected, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        if (which == PRESETS.length) custom(context, controller, current);
-                        else apply(context, controller, PRESETS[which]);
+                        if (which == PRESETS.length) {
+                            input.requestFocus(); input.selectAll();
+                        } else if (which >= 0 && which < PRESETS.length) {
+                            // Preserve the last applied custom value before switching presets.
+                            PreferenceManager.getDefaultSharedPreferences(context).edit()
+                                    .putString(CUSTOM_KEY, Integer.toString(remembered)).commit();
+                            apply(context, controller, PRESETS[which]); dialog.dismiss();
+                        }
                     }
-                }).setNegativeButton(android.R.string.cancel, null).show();
-    }
-
-    private static void custom(final Context context, final Object controller, int current) {
-        final EditText input = new EditText(context);
-        input.setSingleLine(true);
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setText(Integer.toString(current));
-        input.selectAll();
-        input.setHint("1–86400 s");
-        final AlertDialog dialog = new AlertDialog.Builder(context).setTitle(TITLE)
-                .setView(input).setPositiveButton(android.R.string.ok, null)
+                }).setView(input).setPositiveButton(applyLabel, null)
                 .setNegativeButton(android.R.string.cancel, null).create();
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             public void onShow(DialogInterface ignored) {
@@ -101,17 +114,23 @@ public final class ViewerControls {
                         try {
                             int value = Integer.parseInt(input.getText().toString().trim());
                             if (value < 1 || value > 86400) throw new NumberFormatException();
-                            apply(context, controller, value);
-                            dialog.dismiss();
-                        } catch (NumberFormatException exception) {
-                            input.setError("1–86400 s");
-                        }
+                            PreferenceManager.getDefaultSharedPreferences(context).edit()
+                                    .putString(CUSTOM_KEY, Integer.toString(value)).commit();
+                            apply(context, controller, value); dialog.dismiss();
+                        } catch (NumberFormatException exception) { input.setError("1–86400 s"); }
                     }
                 });
             }
         });
         dialog.show();
-        input.requestFocus();
+    }
+
+    private static int customSeconds(Context context, int fallback) {
+        try {
+            int value = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context)
+                    .getString(CUSTOM_KEY, Integer.toString(fallback)));
+            return value >= 1 && value <= 86400 ? value : fallback;
+        } catch (RuntimeException exception) { return fallback; }
     }
 
     private static int seconds(Context context) {
