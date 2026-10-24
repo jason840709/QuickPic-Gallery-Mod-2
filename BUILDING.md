@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.14.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.15.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.14`，版本代碼為 `11014001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.15`，版本代碼為 `11015001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -76,7 +76,8 @@ python3 scripts/build.py \
 | `scripts/patch_viewer.py` | 在兩個圖片檢視控制器插入工具列及秒數浮窗呼叫，調整圖片選單 |
 | `scripts/patch_defaults.py` | 開啟或回到前景時恢復顯示隱藏項目，保留原密碼驗證；首次安裝預設無轉場 |
 | `scripts/patch_animation.py` | WebP 候選辨識、預覽升級與動畫排程呼叫 |
-| `scripts/patch_xphoto.py` | 只替換螢幕保護圖片的開啟方法，保留既有 PNG 產生程式 |
+| `scripts/patch_xphoto.py` | 更新既有 XPhoto 開啟接點 |
+| `scripts/patch_screensaver.py` | 新增檢視尺寸設定，將原背景產圖入口接到可設定尺寸的 PNG 流程 |
 | `scripts/patch_about.py` | 整理關於頁、貢獻者、GitHub 與 FAQ |
 | `scripts/patch_normalize.py` | 統一套件、App 名稱及版本，移除原生函式庫，更新輸出目錄與更新連結 |
 | `scripts/build.py` | 校驗基底 APK、編譯 Java、以 D8 轉換程式、併入修補、重建及簽署 |
@@ -157,3 +158,5 @@ python3 -B tests/reader_mode_host/run.py --output-json /tmp/reader-mode.json
 ```
 
 補丁只支援已核對的固定基底。它會先檢查所有切點，再寫入解碼工作副本；組譯前可重套，重組譯後 label 會改名，不能把重套到最終重新解碼檔的結果當成相同檢查。
+
+屏保尺寸與裁切設計見 [SCREENSAVER.md](SCREENSAVER.md)。裁切、EXIF、PNG 與失敗清理的主機檢查：`python3 tests/screensaver_host/renderer/run.py --android-jar "$ANDROID_JAR"`；使用 Java2D 替身，實際 Android 解碼另驗證。

@@ -6,23 +6,25 @@ REPO='https://github.com/jason840709/QuickPic-Gallery-Mod-2'
 
 PROGRESS_PATH='smali/com/alensw/ui/c/ScreenSaverHelper$DialogClickListener.smali'
 OLD_PROGRESS='正在產生 1860×2480 PNG，完成後將開啟系統 XPhoto…'
-NEW_PROGRESS='正在產生 1860×2480 PNG，完成後將開啟圖片檢視器…'
+NEW_PROGRESS='正在產生屏保 PNG，完成後將開啟圖片檢視器…'
 
 def normalize_progress(root):
- # Change only the progress string; leave the PNG generation code untouched.
+ # Normalize original and maintained-base messages to the size-independent status.
  path=Path(root)/PROGRESS_PATH;before=path.read_bytes()
- pairs=[(OLD_PROGRESS.encode('utf-8'),NEW_PROGRESS.encode('utf-8')),
-        (json.dumps(OLD_PROGRESS,ensure_ascii=True)[1:-1].encode('ascii'),
-         json.dumps(NEW_PROGRESS,ensure_ascii=True)[1:-1].encode('ascii'))]
- old_count=sum(before.count(old) for old,new in pairs)
- new_count=sum(before.count(new) for old,new in pairs)
- if old_count+new_count!=1:raise ValueError('Expected exactly one screensaver progress string')
+ variants=(OLD_PROGRESS, '正在產生 1860×2480 PNG，完成後將開啟圖片檢視器…', NEW_PROGRESS)
+ pairs=[]
+ for value in variants:
+  pairs.extend([(value.encode('utf-8'),NEW_PROGRESS.encode('utf-8')),
+    (json.dumps(value,ensure_ascii=True)[1:-1].encode('ascii'),
+     json.dumps(NEW_PROGRESS,ensure_ascii=True)[1:-1].encode('ascii'))])
+ count=sum(before.count(old) for old,new in pairs)
+ if count!=1:raise ValueError('Expected exactly one screensaver progress string')
  after=before
  for old,new in pairs:after=after.replace(old,new)
  if after!=before:path.write_bytes(after)
  return {'path':PROGRESS_PATH,'changed':after!=before}
 
-def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.14',version_code=11014001,app_name='快圖'):
+def patch(decoded_root,package='io.github.jason840709.quickpic',version_name='11.0.15',version_code=11015001,app_name='快圖'):
  root=Path(decoded_root);manifest=root/'AndroidManifest.xml';old=ET.parse(manifest).getroot().get('package')
  if not old or not re.fullmatch(r'[a-zA-Z]\w*(?:\.[a-zA-Z]\w*)+',package):raise ValueError('Invalid package')
  replacements=[(old.replace('.','/'),package.replace('.','/')),(old,package),

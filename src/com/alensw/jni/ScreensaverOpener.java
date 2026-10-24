@@ -101,7 +101,7 @@ public final class ScreensaverOpener {
             chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             chooser.setClipData(view.getClipData());
             if (launch(context, chooser)) {
-                status(context, "已保存 1860×2480 PNG，請選擇 App 開啟");
+                status(context, "已保存屏保 PNG，請選擇 App 開啟");
                 return;
             }
         } catch (RuntimeException e) {
@@ -148,7 +148,7 @@ public final class ScreensaverOpener {
     }
 
     private static void xphotoStatus(Context context) {
-        status(context, "已產生 1860×2480 PNG，請在 XPhoto 內點「設置為屏保」");
+        status(context, "已產生屏保 PNG，請在 XPhoto 內點「設置為屏保」");
     }
 
     private static void savedFailure(Context context, File png, String reason) {

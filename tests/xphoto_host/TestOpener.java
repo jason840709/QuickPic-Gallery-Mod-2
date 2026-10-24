@@ -83,7 +83,7 @@ public final class TestOpener {
         context.pm.original = null;
         open();
         chooser();
-        ok("已保存 1860×2480 PNG，請選擇 App 開啟".equals(android.widget.Toast.last), "short truthful chooser toast");
+        ok("已保存屏保 PNG，請選擇 App 開啟".equals(android.widget.Toast.last), "short truthful chooser toast");
         done("missing_xphoto_chooser");
 
         reset(true);

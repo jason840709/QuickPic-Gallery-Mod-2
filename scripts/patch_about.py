@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.14",
+        "version_number": "11.0.15",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -251,6 +251,13 @@ def replacement_strings(path):
         latest = "11.0.14 更新\\n新增閱讀器模式：保留目前頁面，等下一張完整圖片載入好後才換頁，不顯示模糊預覽或載入字樣。\\n手動翻頁與投影片均可使用；開啟後會減少閃爍，但延遲會提高。"
     else:
         latest = "Changes in 11.0.14\\nAdd Reader mode: keep the current page until the next complete image is ready, without a blurry preview or loading text.\\nWorks for manual page turns and slideshows. Reduces flicker with increased page-turn delay."
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.15 更新\\n设置→检视新增屏保图尺寸，可自定义宽高或检测当前屏幕像素。\\n按目标比例从图片中央裁出最大范围，再输出指定尺寸的 PNG；未设置时保留 1860×2480。"
+    elif chinese:
+        latest = "11.0.15 更新\\n設定→檢視新增屏保圖尺寸，可自訂寬高或偵測目前螢幕像素。\\n依目標比例從圖片中央裁出最大範圍，再輸出指定尺寸的 PNG；未設定時保留 1860×2480。"
+    else:
+        latest = "Changes in 11.0.15\\nAdd screensaver image size under Settings → View: enter width and height or detect the current screen pixels.\\nUse the largest centered crop matching the target ratio and export an exact-size PNG. Keep 1860×2480 until configured."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

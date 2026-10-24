@@ -1,0 +1,13 @@
+# 屏保圖尺寸與裁切
+
+在「設定 → 檢視 → 設定屏保圖尺寸」輸入寬高，或選「自動偵測」，再按「儲存」。設定會保留；取消不會改動。未設定時維持 1860 × 2480 像素。
+
+自動偵測讀取目前顯示器模式的實體像素，配合當前旋轉方向排列寬高，包含系統列所占的範圍。Android 5 使用完整顯示尺寸作後備。偵測結果存成一組固定尺寸，之後旋轉裝置不會自行改寫；要換尺寸可重新偵測。API 定義見 [Display.Mode](https://developer.android.com/reference/android/view/Display.Mode) 與 [Display.getRotation](https://developer.android.com/reference/android/view/Display#getRotation())。
+
+裁切先考慮圖片的 EXIF 方向，再從中央取出符合目標長寬比的最大範圍。例如 10,000 × 10,000 的圖片要輸出 1860 × 2480，會使用中央 7500 × 10,000 的內容，最後縮放成指定像素。透明區域維持以白底合成。
+
+`ScreensaverImage` 優先只解碼要使用的區域，並選擇不低於輸出細節所需的取樣尺寸。格式不支援區域解碼時，會先檢查完整解碼所需記憶體。寬高各限 1～8192，總像素不超過 3200 萬；裝置可用記憶體不足時仍可能需要調小尺寸。
+
+原有背景產圖工作會呼叫 `ScreensaverExport`，讀取保存的尺寸後產生 PNG。檔案先寫入同目錄的暫存檔，確認 PNG 標頭與尺寸後才更名；失敗會清理這次暫存檔。輸出保存在 Pictures 下的 `QuickPic-Screensaver`，檔名包含寬高。來源與先前輸出都保留。
+
+產生後沿用 `ScreensaverOpener`：優先嘗試 XPhoto 的原有介面，再嘗試 XPhoto 的一般 PNG 檢視器，最後提供系統 App 選擇器。選擇器使用附讀取權限的 content URI。分身工具仍會把各分身的輸出資料夾分開。
