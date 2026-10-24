@@ -53,7 +53,7 @@ def outside_about(text):
 
 class MigrationTests(unittest.TestCase):
     def test_preserves_supplied_and_unknown_records(self):
-        old = 'Original E-Ink text\\n\\nChanges in 11.0.2\\nAn older exact record\\n\\nChanges in 11.0.9\\nA supplied future record'
+        old = 'Original E-Ink text\\n\\nChanges in 11.0.2\\nAn older exact record\\n\\nChanges in 11.9.99\\nA supplied future record'
         canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
         result = patch_about.merge_history(old, canonical)
         self.assertIn("Original E-Ink text", patch_about.history_sections(result)[1]["11.0.0"][1])
@@ -61,8 +61,21 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("An older exact record", result)
         self.assertIn("A supplied future record", result)
         self.assertEqual(patch_about.merge_history(result, canonical), result)
-        for version in range(7):
-            self.assertIn("Changes in 11.0." + str(version) + "\n", display_value(result))
+        for version in patch_about.HISTORY_VERSIONS:
+            self.assertIn("Changes in " + version + "\n", display_value(result))
+
+    def test_consolidates_only_requested_deletion_releases(self):
+        for folder in ("values", "values-zh-rTW", "values-zh-rCN"):
+            canonical = patch_about.replacement_strings(Path("res") / folder / "strings.xml")["eink_features_content"]
+            old = "\n\n".join("Changes in 11.0." + str(v) + "\nPrivate development marker " + str(v) for v in range(7, 14))
+            old += "\n\nChanges in 11.9.99\nKeep future wording"
+            merged = patch_about.merge_history(old, canonical)
+            _, sections = patch_about.history_sections(merged)
+            self.assertTrue(all("11.0." + str(v) not in sections for v in range(7, 13)))
+            self.assertNotIn("Private development marker", merged)
+            self.assertEqual(sections["11.0.13"], patch_about.history_sections(canonical)[1]["11.0.13"])
+            self.assertEqual(sections["11.9.99"][1], "Keep future wording")
+            self.assertEqual(patch_about.merge_history(merged, canonical), merged)
 
     def test_actual_newlines_and_android_quotes_remain_readable(self):
         old = '"E-Ink notes\n · Keep the author\\\'s wording and \\"quotes\\""'
@@ -82,8 +95,8 @@ class MigrationTests(unittest.TestCase):
             parsed = strings(result)
             self.assertEqual(parsed["eink_features_title"], label)
             self.assertEqual(parsed["app_name"], "Keep")
-            self.assertIn("11.0.6", parsed["eink_features_content"])
-            self.assertIn("11.0.6", parsed[patch_about.LATEST_CONTENT])
+            self.assertIn("11.0.13", parsed["eink_features_content"])
+            self.assertIn("11.0.13", parsed[patch_about.LATEST_CONTENT])
             self.assertEqual(parsed[patch_about.ARCHIVE_TITLE], {"values": "Complete version history", "values-zh-rTW": "完整版本開發紀錄", "values-zh-rCN": "完整版本开发记录"}[folder])
             self.assertEqual(patch_about.normalize_strings(result, Path("res") / folder / "strings.xml"), result)
 
@@ -128,7 +141,7 @@ class MigrationTests(unittest.TestCase):
             self.assertFalse(preamble)
             self.assertNotIn(heading, merged)
             self.assertEqual(sections["11.0.0"][1], "Keep all E-Ink instructions\n\nKeep 64-bit instructions")
-            self.assertEqual(list(sections), ["11.0." + str(v) for v in range(7)])
+            self.assertEqual(list(sections), list(patch_about.HISTORY_VERSIONS))
 
     def test_latest_summary_and_archive_share_current_release_content(self):
         for folder in ("values", "values-zh-rTW", "values-zh-rCN"):
@@ -136,9 +149,9 @@ class MigrationTests(unittest.TestCase):
             _, archive = patch_about.history_sections(values["eink_features_content"])
             latest_preamble, latest = patch_about.history_sections(values[patch_about.LATEST_CONTENT])
             self.assertFalse(latest_preamble)
-            self.assertEqual(latest["11.0.6"], archive["11.0.6"])
+            self.assertEqual(latest["11.0.13"], archive["11.0.13"])
             self.assertEqual(len(latest), 1)
-            self.assertEqual(values["version_number"], "11.0.6")
+            self.assertEqual(values["version_number"], "11.0.13")
 
     def test_duplicate_supplied_versions_fail_without_dropping_text(self):
         canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
@@ -213,23 +226,29 @@ def actual_checks(decoded, work, aapt2=None):
                 if preamble:
                     check(relative + " retains all E-Ink prose under 11.0.0", preamble in new_sections["11.0.0"][1])
                 for version, (_, body) in old_sections.items():
-                    check(relative + " retains all supplied prose for " + version, body in new_sections[version][1])
+                    if version in patch_about.CONSOLIDATED_VERSIONS:
+                        check(relative + " replaces deletion development entry " + version,
+                              version == "11.0.13" or version not in new_sections)
+                    else:
+                        check(relative + " retains all supplied prose for " + version, body in new_sections[version][1])
                 check(relative + " removes only obsolete pre-release heading", "E-Ink feature record before 11.0.0" not in new["eink_features_content"] and "11.0.0 前的 E-Ink" not in new["eink_features_content"])
             if "eink_features_content" in new:
                 body = new["eink_features_content"]
-                for version in range(7):
-                    pattern = r"(?:^|\n)(?:Changes in )?11\.0\." + str(version) + r"(?: 更新| 新增功能)?\n"
-                    check(relative + " has one record for 11.0." + str(version), len(re.findall(pattern, body)) == 1)
+                for version in patch_about.HISTORY_VERSIONS:
+                    pattern = r"(?:^|\n)(?:Changes in )?" + re.escape(version) + r"(?: 更新| 新增功能)?\n"
+                    check(relative + " has one record for " + version, len(re.findall(pattern, body)) == 1)
+                _, actual_sections = patch_about.history_sections(body)
+                check(relative + " removes intermediate deletion entries", not any("11.0." + str(v) in actual_sections for v in range(7, 13)))
             if "version_number" in new:
-                check(relative + " displays 11.0.6", new["version_number"] == "11.0.6")
+                check(relative + " displays 11.0.13", new["version_number"] == "11.0.13")
         elif relative == "res/values/public.xml":
             check("all existing public resource IDs unchanged", before == after)
     for folder, label in (("values", "Version development history"),
                           ("values-zh-rTW", "版本開發紀錄"), ("values-zh-rCN", "版本开发记录")):
         values = strings(first["res/" + folder + "/strings.xml"])
         check(folder + " localizes development history", values["eink_features_title"] == label)
-        check(folder + " latest summary contains only current version", list(patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]) == ["11.0.6"])
-        check(folder + " latest and full history show identical current changes", patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]["11.0.6"] == patch_about.history_sections(values["eink_features_content"])[1]["11.0.6"])
+        check(folder + " latest summary contains only current version", list(patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]) == ["11.0.13"])
+        check(folder + " latest and full history show identical current changes", patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]["11.0.13"] == patch_about.history_sections(values["eink_features_content"])[1]["11.0.13"])
     header = ET.fromstring(first["res/layout/about_version.xml"])
     check("About header contains only app identity", {n.get(A + "text") for n in header.iter("TextView")} == {
         "@string/app_name_full", "@string/version_number", "@string/build_type"})

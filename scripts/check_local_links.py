@@ -27,9 +27,9 @@ class LocalLinks:
         if text is None:
             return False
         if kind == "method":
-            declared = re.findall(r"^\.method [^\n]*? (\S+\([^\n]+)$", text, re.M)
+            declared = re.findall(r"^\.method (?:\S+ )*(\S+\([^\n]+)$", text, re.M)
         else:
-            declared = re.findall(r"^\.field [^\n]*? (\S+:[^ =\n]+)", text, re.M)
+            declared = re.findall(r"^\.field (?:\S+ )*?(\S+:[^ =\n]+)", text, re.M)
         if member in declared:
             return True
         parents = re.findall(r"^\.(?:super|implements) (L[^;]+;)", text, re.M)

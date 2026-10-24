@@ -23,6 +23,12 @@ New installations display each image for 3 seconds by default. The interval cont
 
 Scanning explores new or recently changed folders before revisiting known paths, so newly downloaded comics can be found sooner. Creation/added-time and modification sorting are separate choices. Existing files without a reliable creation time initially use modification time; later additions retain their first observed time.
 
+### Deleting images and folders
+
+Deleting a folder removes the whole directory, including non-image files, hidden files and subfolders. Access to the selected SD-card location must be granted first. Failed or cancelled items remain in the list; after a successful parent deletion, its child albums are removed too.
+
+Individual and selected-image deletion use the available storage permissions and media records to reduce redundant cleanup. Per-image progress remains; no diagnostic report appears after deletion.
+
 ### Screensaver images
 
 Open the image’s three-dot menu, choose Set as, then select the screensaver action. The app creates a **1860 × 2480 pixel PNG** in `QuickPic-Screensaver`.

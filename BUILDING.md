@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.6.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.13.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.6`，版本代碼為 `11006001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.13`，版本代碼為 `11013001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -133,3 +133,16 @@ python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /p
 `python tests/viewer_controls_host/run.py` 使用實際輔助程式測試工具列、主題與自訂秒數；`python tests/folder_path_host/run.py --decoded <原APK解碼目錄> --work-dir <工作目錄>`核對路徑編輯補丁；`python tests/about_history_host/run.py --decoded <原APK解碼目錄>`檢查離線歷史頁、最新／完整紀錄兩部分，以及將舊E-Ink內容歸入11.0.0後的功能保全。最終APK仍須核對原有public資源ID、新layout連結與DEX方法簽名；手機排版和鍵盤需另外驗收。
 
 11.0.6的間隔視窗使用可捲動的單一內容區。選項按鈕直接套用已保存的秒數，輸入欄的新值只由「套用自訂」保存；主機測試分別核對這兩種操作及1～86400秒範圍。輸入欄的左邊界取自實際主題單選按鈕的文字內距，工具列的計時器向量沿用原資源ID。實際螢幕、字體放大與鍵盤顯示仍需裝置確認。
+
+## 刪除流程檢查
+
+`tests/folder_delete_host/run.py`核對整樹、授權範圍、取消、失敗、連結與MediaStore批次範圍；`tests/file_delete_host/run.py`核對raw／SAF旗標、原方法回退與實際smali組譯。兩者以`--decoded`指定正確基底，完整參數見各入口`--help`。最終APK需核對新增方法完整DEX描述符，以及普通MediaStore支路保留。Android測試應確認實體檔案、媒體索引和相鄰資料夾，不能僅看列表消失。方法說明見[DELETION](DELETION.md)。
+
+
+## 刪除範圍與停用診斷
+
+正式版保留`DeleteTiming`的35個既有公開方法，讓原worker與wrapper接線不變；ACTIVE／fileOpen仍限制單檔`MediaCleanup`派發。診斷常數固定關閉，`complete`移除scope後回null，`finish`與`save`沒有顯示或寫檔。不能直接移除begin呼叫，否則會連同本機ID清理一起停用。
+
+`tests/delete_timing_host/run.py --help`列出production靜默模式的主機、真SDK與D8參數。它驗IO回傳／例外、正常／取消／throw的scope、沒有報告UI或保存，以及薄MediaCleanup替身的派發；演算法本身由`tests/media_cleanup_host/run.py`與`tests/fast_media_delete_host/run.py`驗證。兩個入口使用`ANDROID_HOME`或`ANDROID_SDK_ROOT`尋找SDK，也能用參數明確指定既有android.jar及D8。
+
+完整刪除機制見[DELETION](DELETION.md)。最終APK仍需驗證本機單筆收尾、記憶卡快速路徑、混合內容整夾刪除、未選檔案保留、沒有診斷視窗，以及舊私有報告沒有被更新。

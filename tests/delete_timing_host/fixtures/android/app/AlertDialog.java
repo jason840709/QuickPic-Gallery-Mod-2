@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: MIT
+package android.app;
+import android.content.Context;import android.view.View;import android.widget.Button;
+public class AlertDialog extends Dialog {public static final int BUTTON_POSITIVE=-1;public static int shown;public static AlertDialog last;public String title,positive,negative;public View view;public final Button button;public AlertDialog(Context c){super(c);button=new Button(c);}public void show(){shown++;last=this;}public Button getButton(int id){return button;}public static class Builder {final AlertDialog dialog;public Builder(Context c){dialog=new AlertDialog(c);}public Builder setTitle(String t){dialog.title=t;return this;}public Builder setView(View v){dialog.view=v;return this;}public Builder setPositiveButton(String t,Object l){dialog.positive=t;return this;}public Builder setNegativeButton(String t,Object l){dialog.negative=t;return this;}public AlertDialog create(){return dialog;}}}
