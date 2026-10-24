@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.13.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.14.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.13`，版本代碼為 `11013001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.14`，版本代碼為 `11014001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 
@@ -146,3 +146,14 @@ python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /p
 `tests/delete_timing_host/run.py --help`列出production靜默模式的主機、真SDK與D8參數。它驗IO回傳／例外、正常／取消／throw的scope、沒有報告UI或保存，以及薄MediaCleanup替身的派發；演算法本身由`tests/media_cleanup_host/run.py`與`tests/fast_media_delete_host/run.py`驗證。兩個入口使用`ANDROID_HOME`或`ANDROID_SDK_ROOT`尋找SDK，也能用參數明確指定既有android.jar及D8。
 
 完整刪除機制見[DELETION](DELETION.md)。最終APK仍需驗證本機單筆收尾、記憶卡快速路徑、混合內容整夾刪除、未選檔案保留、沒有診斷視窗，以及舊私有報告沒有被更新。
+
+
+## 閱讀器模式
+
+`patch_reader.py` 在既有功能補丁後、套件正規化之前，將 `ReaderMode.Host` 接到兩套看圖控制器，並為圖片結果加入 `Frame` 介面。新增 Java 程式仍使用相同 SDK／D8 建置；不需要新的圖片框架或原生函式庫。載入請求、引用與取消規則見 [READER_MODE](READER_MODE.md)。
+
+```sh
+python3 -B tests/reader_mode_host/run.py --output-json /tmp/reader-mode.json
+```
+
+補丁只支援已核對的固定基底。它會先檢查所有切點，再寫入解碼工作副本；組譯前可重套，重組譯後 label 會改名，不能把重套到最終重新解碼檔的結果當成相同檢查。

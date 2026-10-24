@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13",)
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.13",
+        "version_number": "11.0.14",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -244,6 +244,13 @@ def replacement_strings(path):
         latest = "11.0.13 更新\\n相較11.0.6，改善單張、多選及整個資料夾的刪除流程；本機與記憶卡的圖片刪除已完成實測，速度已改善。\\n依可用媒體紀錄精確刪除與清理，省略重複工作；刪除資料夾會一併移除非圖片、隱藏檔和子資料夾。\\n保留刪除進度，移除刪除後的診斷報告。"
     else:
         latest = "Changes in 11.0.13\\nImprove individual, selected-image and whole-folder deletion compared with 11.0.6. Internal-storage and SD-card image deletion have been tested with improved speed.\\nUse available media records for precise deletion and cleanup, skipping redundant work. Whole-folder deletion includes non-images, hidden files and subfolders.\\nKeep deletion progress and remove post-deletion diagnostic reports."
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.14 更新\\n新增阅读器模式：保留当前页面，等下一张完整图片加载好后再换页，不显示模糊预览或加载字样。\\n手动翻页与幻灯片均可使用；开启后会减少闪烁，但延迟会提高。"
+    elif chinese:
+        latest = "11.0.14 更新\\n新增閱讀器模式：保留目前頁面，等下一張完整圖片載入好後才換頁，不顯示模糊預覽或載入字樣。\\n手動翻頁與投影片均可使用；開啟後會減少閃爍，但延遲會提高。"
+    else:
+        latest = "Changes in 11.0.14\\nAdd Reader mode: keep the current page until the next complete image is ready, without a blurry preview or loading text.\\nWorks for manual page turns and slideshows. Reduces flicker with increased page-turn delay."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
