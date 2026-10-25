@@ -96,7 +96,7 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(parsed["eink_features_title"], label)
             self.assertEqual(parsed["app_name"], "Keep")
             self.assertIn("11.0.13", parsed["eink_features_content"])
-            self.assertIn("11.0.15", parsed[patch_about.LATEST_CONTENT])
+            self.assertIn("11.0.16", parsed[patch_about.LATEST_CONTENT])
             self.assertEqual(parsed[patch_about.ARCHIVE_TITLE], {"values": "Complete version history", "values-zh-rTW": "完整版本開發紀錄", "values-zh-rCN": "完整版本开发记录"}[folder])
             self.assertEqual(patch_about.normalize_strings(result, Path("res") / folder / "strings.xml"), result)
 
@@ -149,9 +149,9 @@ class MigrationTests(unittest.TestCase):
             _, archive = patch_about.history_sections(values["eink_features_content"])
             latest_preamble, latest = patch_about.history_sections(values[patch_about.LATEST_CONTENT])
             self.assertFalse(latest_preamble)
-            self.assertEqual(latest["11.0.15"], archive["11.0.15"])
+            self.assertEqual(latest["11.0.16"], archive["11.0.16"])
             self.assertEqual(len(latest), 1)
-            self.assertEqual(values["version_number"], "11.0.15")
+            self.assertEqual(values["version_number"], "11.0.16")
 
     def test_duplicate_supplied_versions_fail_without_dropping_text(self):
         canonical = patch_about.replacement_strings(Path("res/values/strings.xml"))["eink_features_content"]
@@ -240,15 +240,15 @@ def actual_checks(decoded, work, aapt2=None):
                 _, actual_sections = patch_about.history_sections(body)
                 check(relative + " removes intermediate deletion entries", not any("11.0." + str(v) in actual_sections for v in range(7, 13)))
             if "version_number" in new:
-                check(relative + " displays 11.0.15", new["version_number"] == "11.0.15")
+                check(relative + " displays 11.0.16", new["version_number"] == "11.0.16")
         elif relative == "res/values/public.xml":
             check("all existing public resource IDs unchanged", before == after)
     for folder, label in (("values", "Version development history"),
                           ("values-zh-rTW", "版本開發紀錄"), ("values-zh-rCN", "版本开发记录")):
         values = strings(first["res/" + folder + "/strings.xml"])
         check(folder + " localizes development history", values["eink_features_title"] == label)
-        check(folder + " latest summary contains only current version", list(patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]) == ["11.0.15"])
-        check(folder + " latest and full history show identical current changes", patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]["11.0.15"] == patch_about.history_sections(values["eink_features_content"])[1]["11.0.15"])
+        check(folder + " latest summary contains only current version", list(patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]) == ["11.0.16"])
+        check(folder + " latest and full history show identical current changes", patch_about.history_sections(values[patch_about.LATEST_CONTENT])[1]["11.0.16"] == patch_about.history_sections(values["eink_features_content"])[1]["11.0.16"])
     header = ET.fromstring(first["res/layout/about_version.xml"])
     check("About header contains only app identity", {n.get(A + "text") for n in header.iter("TextView")} == {
         "@string/app_name_full", "@string/version_number", "@string/build_type"})

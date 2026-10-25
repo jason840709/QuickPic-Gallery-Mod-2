@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15", "11.0.16")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.15",
+        "version_number": "11.0.16",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -258,6 +258,13 @@ def replacement_strings(path):
         latest = "11.0.15 更新\\n設定→檢視新增屏保圖尺寸，可自訂寬高或偵測目前螢幕像素。\\n依目標比例從圖片中央裁出最大範圍，再輸出指定尺寸的 PNG；未設定時保留 1860×2480。"
     else:
         latest = "Changes in 11.0.15\\nAdd screensaver image size under Settings → View: enter width and height or detect the current screen pixels.\\nUse the largest centered crop matching the target ratio and export an exact-size PNG. Keep 1860×2480 until configured."
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.16 更新\\n屏保图尺寸窗口新增「恢复默认」按钮，可填回 1860×2480，再保存套用。"
+    elif chinese:
+        latest = "11.0.16 更新\\n屏保圖尺寸視窗新增「恢復預設」按鈕，可填回 1860×2480，再儲存套用。"
+    else:
+        latest = "Changes in 11.0.16\\nAdd Restore defaults beside the screensaver size fields. Fill in 1860×2480, then save to apply."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

@@ -1,6 +1,6 @@
 # 屏保圖尺寸與裁切
 
-在「設定 → 檢視 → 設定屏保圖尺寸」輸入寬高，或選「自動偵測」，再按「儲存」。設定會保留；取消不會改動。未設定時維持 1860 × 2480 像素。
+在「設定 → 檢視 → 設定屏保圖尺寸」輸入寬高，或選「自動偵測」，再按「儲存」。設定會保留；取消不會改動。未設定時維持 1860 × 2480 像素。按輸入欄旁的「恢復預設」可填回 1860 × 2480，再按「儲存」套用。
 
 自動偵測讀取目前顯示器模式的實體像素，配合當前旋轉方向排列寬高，包含系統列所占的範圍。Android 5 使用完整顯示尺寸作後備。偵測結果存成一組固定尺寸，之後旋轉裝置不會自行改寫；要換尺寸可重新偵測。API 定義見 [Display.Mode](https://developer.android.com/reference/android/view/Display.Mode) 與 [Display.getRotation](https://developer.android.com/reference/android/view/Display#getRotation())。
 

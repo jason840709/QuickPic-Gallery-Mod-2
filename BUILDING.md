@@ -40,7 +40,7 @@ ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.15.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.16.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.15`，版本代碼為 `11015001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」，版本為 `11.0.16`，版本代碼為 `11016001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
 
 ## 每一步修改的位置
 

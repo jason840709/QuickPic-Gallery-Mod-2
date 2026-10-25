@@ -34,7 +34,7 @@ Individual and selected-image deletion use the available storage permissions and
 
 Open the image’s three-dot menu, choose Set as, then select the screensaver action. The app creates a PNG in `QuickPic-Screensaver`.
 
-Under Settings → View → Screensaver image size (設定屏保圖尺寸), enter a custom width and height or detect the current screen pixels, then save. The image is cropped from the center using the largest area matching the target aspect ratio, and resized to the exact output dimensions. The default remains 1860 × 2480 pixels until configured.
+Under Settings → View → Screensaver image size (設定屏保圖尺寸), enter a custom width and height or detect the current screen pixels, then save. The image is cropped from the center using the largest area matching the target aspect ratio, and resized to the exact output dimensions. The default remains 1860 × 2480 pixels until configured. Use Restore defaults (恢復預設) beside the fields to fill in that size again, then save.
 
 The app first tries XPhoto. If XPhoto is unavailable or cannot open the image, you can choose another image app. Finish assigning the PNG as the device screensaver in XPhoto or your e-reader’s system settings.
 

@@ -15,6 +15,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 
 /** Stores a pixel-size snapshot; detection never uses dp or the content viewport. */
 public final class ScreensaverPreference extends Preference {
+    private static final int DEFAULT_WIDTH = 1860, DEFAULT_HEIGHT = 2480;
     private static final String WIDTH = "screensaver_width";
     private static final String HEIGHT = "screensaver_height";
     private static final String AUTO = "screensaver_detected";
@@ -37,9 +39,9 @@ public final class ScreensaverPreference extends Preference {
     public static int[] dimensions(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int w, h;
-        try { w = prefs.getInt(WIDTH, 1860); h = prefs.getInt(HEIGHT, 2480); }
-        catch (ClassCastException bad) { return new int[] {1860, 2480}; }
-        return ScreensaverImage.validSize(w, h) ? new int[] {w, h} : new int[] {1860, 2480};
+        try { w = prefs.getInt(WIDTH, DEFAULT_WIDTH); h = prefs.getInt(HEIGHT, DEFAULT_HEIGHT); }
+        catch (ClassCastException bad) { return new int[] {DEFAULT_WIDTH, DEFAULT_HEIGHT}; }
+        return ScreensaverImage.validSize(w, h) ? new int[] {w, h} : new int[] {DEFAULT_WIDTH, DEFAULT_HEIGHT};
     }
 
     private void refreshSummary() {
@@ -102,6 +104,22 @@ public final class ScreensaverPreference extends Preference {
         TextView times = new TextView(context); times.setText(" × "); fields.addView(times);
         fields.addView(height, new LinearLayout.LayoutParams(0, -2, 1));
         TextView unit = new TextView(context); unit.setText(" px"); fields.addView(unit);
+        Button reset = new Button(context, null, android.R.attr.borderlessButtonStyle);
+        reset.setText("恢復預設");
+        reset.setTextSize(13);
+        reset.setMinWidth(0); reset.setMinimumWidth(0);
+        reset.setPadding(dp(8), 0, dp(8), 0);
+        reset.setOnClickListener(new android.view.View.OnClickListener() {
+            @Override public void onClick(android.view.View button) {
+                // Switch first: the radio listener may fill the previously saved values.
+                choices.check(CUSTOM_ID);
+                width.setEnabled(true); height.setEnabled(true);
+                width.setText(String.valueOf(DEFAULT_WIDTH));
+                height.setText(String.valueOf(DEFAULT_HEIGHT));
+                width.setError(null); height.setError(null);
+            }
+        });
+        fields.addView(reset, new LinearLayout.LayoutParams(-2, -2));
         body.addView(fields);
         boolean wasAuto;
         try { wasAuto = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(AUTO, false); }
