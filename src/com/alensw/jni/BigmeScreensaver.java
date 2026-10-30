@@ -52,10 +52,9 @@ public final class BigmeScreensaver {
             }
             new AlertDialog.Builder(context)
                 .setTitle("設置為 B1051C 屏保")
-                .setMessage("將另存為 1860×2480 PNG，再交給系統套用。\n\n"
-                    + "此功能尚待實機驗證；系統沒有提供寫入確認與復原功能。快圖不會自動關閉螢幕。")
+                .setMessage("將另存為 1860x2480 PNG 再交給系統套用")
                 .setNegativeButton("取消", null)
-                .setPositiveButton("交給系統套用", new DialogInterface.OnClickListener() {
+                .setPositiveButton("確認", new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         start(context.getApplicationContext(), source);
                     }
@@ -75,7 +74,7 @@ public final class BigmeScreensaver {
             }, "QuickPic-StandbyImport");
             worker.setPriority(Thread.NORM_PRIORITY - 1);
             worker.start();
-            message(context, "正在準備並檢查屏保 PNG…");
+            message(context, "正在處理圖片…");
         } catch (Exception error) {
             ACTIVE.set(false); message(context, "無法啟動圖片處理");
         }
@@ -113,13 +112,11 @@ public final class BigmeScreensaver {
             // Any result/exception after this boundary is an UNKNOWN commit outcome.
             submitted = true;
             client.call("set_screensaver", picture.getAbsolutePath(), null);
-            message(context, "設定請求已送出；系統未提供結果確認，尚未驗證套用成功");
         } catch (OutOfMemoryError error) {
-            message(context, submitted ? "系統套用結果不明，請勿連續重試"
-                    : "記憶體不足，已停止套用屏保");
+            message(context, "記憶體不足，無法完成屏保設定");
         } catch (Exception error) {
-            message(context, submitted ? "系統套用結果不明，請勿連續重試"
-                    : (error.getMessage() == null ? "檢查未通過，尚未送出屏保設定" : error.getMessage()));
+            message(context, submitted ? "設定屏保時發生錯誤"
+                    : (error.getMessage() == null ? "無法設定屏保" : error.getMessage()));
         } finally {
             if (client != null) try { client.release(); } catch (Exception ignored) {}
             if (media != null) try {

@@ -56,7 +56,7 @@ class BuildTests(unittest.TestCase):
 
     def test_formal_release_identity(self):
         self.assertEqual((build.PACKAGE, build.VERSION_NAME, build.VERSION_CODE),
-                         ("io.github.jason840709.quickpic", "11.0.17", 11017001))
+                         ("io.github.jason840709.quickpic", "11.0.18", 11018001))
 
     def test_native_output_rejected(self):
         import zipfile
@@ -100,7 +100,7 @@ class FeatureTests(unittest.TestCase):
         self.assertNotIn("11.0.0 前的", body)
         self.assertEqual(values[patch_about.LATEST_TITLE], "最新版本更新內容")
         self.assertEqual(values[patch_about.ARCHIVE_TITLE], "完整版本開發紀錄")
-        self.assertTrue(values[patch_about.LATEST_CONTENT].startswith("11.0.17 更新"))
+        self.assertTrue(values[patch_about.LATEST_CONTENT].startswith("11.0.18 更新"))
         self.assertIn("已用 64 位元手機經過測試", body)
         for original_feature in ("無動畫", "左下角", "包含/排除資料夾", "v2 新增"):
             self.assertIn(original_feature, body)
@@ -115,7 +115,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual([n.get("name") for n in root], ["paypal", "unrelated", "github_url", "version_number"])
         self.assertEqual(root[1].text, "keep me")
         self.assertEqual(root[2].text, patch_about.REPO + "/blob/main/README.md")
-        self.assertEqual(root[3].text, "11.0.17")
+        self.assertEqual(root[3].text, "11.0.18")
         self.assertEqual(patch_about.normalize_strings(result, path), result)
 
     def test_xphoto_only_changes_open_method(self):
@@ -212,7 +212,7 @@ class NormalizeTests(unittest.TestCase):
             self.assertIn("QuickPic-Screensaver", normalized)
             self.assertIn("screensaver-1860x2480-", normalized)
             self.assertNotIn(old.replace(".", "/"), normalized)
-            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.17")
+            self.assertEqual(ET.parse(root / "AndroidManifest.xml").getroot().get(A + "versionName"), "11.0.18")
             self.assertIn("QuickPic-Gallery-Mod-2/releases", (root / "res/xml/main_pref.xml").read_text())
             self.assertEqual(ET.parse(root / "res/values/strings.xml").getroot()[0].text, "快圖")
 

@@ -103,7 +103,7 @@ public final class BigmeProbe {
             check(!ScreensaverImage.last.exists(),"Double failed to simulate OEM removal");
             check(Arrays.equals(sourceBytes,Files.readAllBytes(source.toPath())),"OEM removal touched original");
             check(c.grants==1&&c.revokes==1&&c.resolver.client.releases==1,"IPC resources not released");
-            check(Toast.last.contains(fail?"結果不明":"未提供結果確認"),"Unknown outcome wrongly claimed success");passed++;
+            check(fail ? "設定屏保時發生錯誤".equals(Toast.last) : Toast.last==null,"Unexpected completion notice or missing error");passed++;
         }
         byte[] small=join(MAGIC,header(2,3,2),idat(2,3),end);
         byte[] badMagic=small.clone();badMagic[0]=0;rejectPng("magic",badMagic,2,3,10000);

@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15", "11.0.16", "11.0.17")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15", "11.0.16", "11.0.17", "11.0.18")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.17",
+        "version_number": "11.0.18",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -267,11 +267,18 @@ def replacement_strings(path):
         latest = "Changes in 11.0.16\\nAdd Restore defaults beside the screensaver size fields. Fill in 1860×2480, then save to apply."
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 专用屏保入口，独立于原图片查看器流程。先转换并检查 1860×2480 PNG，再经确认交给原厂套用；尚待实机验证。"
+        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 专用屏保入口，独立于原图片查看器流程。先转换并检查 1860×2480 PNG，再经确认交给原厂套用。"
     elif chinese:
-        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 專用屏保入口，獨立於原圖片檢視器流程。先轉換並檢查 1860×2480 PNG，再經確認交給原廠套用；尚待實機驗證。"
+        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 專用屏保入口，獨立於原圖片檢視器流程。先轉換並檢查 1860×2480 PNG，再經確認交給原廠套用。"
     else:
-        latest = "Changes in 11.0.17\\nAdd a separate screensaver import for the verified B1051C 4.9.0 system. Convert and validate a 1860×2480 PNG before confirmation and OEM import. Physical-device verification remains pending."
+        latest = "Changes in 11.0.17\\nAdd a separate screensaver import for the verified B1051C 4.9.0 system. Convert and validate a 1860×2480 PNG before confirmation and OEM import."
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.18 更新\\nB1051C 屏保设置已确认可用。确认窗口只保留 PNG 转换说明，按钮改为「确认／取消」，移除送出后的多余提示。"
+    elif chinese:
+        latest = "11.0.18 更新\\nB1051C 屏保設定已確認可用。確認視窗只保留 PNG 轉換說明，按鈕改為「確認／取消」，移除送出後的多餘提示。"
+    else:
+        latest = "Changes in 11.0.18\\nB1051C screensaver import is confirmed working. Keep only the PNG conversion description, use Confirm/Cancel, and remove the extra submission notice."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
