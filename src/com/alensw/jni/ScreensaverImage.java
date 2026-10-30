@@ -72,6 +72,12 @@ public final class ScreensaverImage {
      */
     public static File prepare(String path, int width, int height, File outputDirectory)
             throws IOException {
+        return prepare(path, width, height, outputDirectory, true);
+    }
+
+    /** OEM import copies must be visible to the platform media provider. */
+    public static File prepare(String path, int width, int height, File outputDirectory,
+            boolean excludeFromMedia) throws IOException {
         if (!validSize(width, height)) {
             throw new IOException("尺寸須為 1～8192 像素，總像素不可超過 3200 萬");
         }
@@ -121,9 +127,11 @@ public final class ScreensaverImage {
                     && !outputDirectory.mkdirs() && !outputDirectory.isDirectory()) {
                 throw new IOException("無法建立屏保圖片資料夾");
             }
-            File noMedia = new File(outputDirectory, ".nomedia");
-            if (!noMedia.isFile() && !noMedia.createNewFile() && !noMedia.isFile()) {
-                throw new IOException("無法保留屏保資料夾的 .nomedia");
+            if (excludeFromMedia) {
+                File noMedia = new File(outputDirectory, ".nomedia");
+                if (!noMedia.isFile() && !noMedia.createNewFile() && !noMedia.isFile()) {
+                    throw new IOException("無法保留屏保資料夾的 .nomedia");
+                }
             }
             String filename = "screensaver-" + width + "x" + height + "-"
                     + UUID.randomUUID().toString() + ".png";
