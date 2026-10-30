@@ -32,13 +32,21 @@ Individual and selected-image deletion use the available storage permissions and
 
 ### Screensaver images
 
-Open the image’s three-dot menu, choose Set as, then select the screensaver action. The app creates a PNG in `QuickPic-Screensaver`.
+Open an image, then choose **Set as** from the three-dot menu. The screensaver actions are:
 
-Under Settings → View → Screensaver image size (設定屏保圖尺寸), enter a custom width and height or detect the current screen pixels, then save. The image is cropped from the center using the largest area matching the target aspect ratio, and resized to the exact output dimensions. The default remains 1860 × 2480 pixels until configured. Use Restore defaults (恢復預設) beside the fields to fill in that size again, then save.
+| Action | Purpose |
+| --- | --- |
+| Set as screensaver (設置為屏保) | Creates a PNG and opens Android’s app chooser directly. Choose an image app, then finish assigning the screensaver in that app or the device settings. |
+| Set as B1051C screensaver (設置為 B1051C 屏保) | Uses the corresponding original screensaver component on B1051C firmware 4.8.8 or 4.9.0. The current image becomes a separate 1860 × 2480 PNG before being handed to the system. |
+| Set as BOOX screensaver (設置為文石屏保) | Hands the current image to the original BOOX screensaver service. It requires a compatible BOOX system and original components; it is not available on ordinary Android phones. |
 
-The app first tries XPhoto. If XPhoto is unavailable or cannot open the image, you can choose another image app. Finish assigning the PNG as the device screensaver in XPhoto or your e-reader’s system settings.
+Under **Settings → View → Image → Show screensaver options** (顯示屏保選項), select the actions to keep and tap Save. Each of the three actions can be shown or hidden, including hiding all three. Wallpaper remains available. Cancel keeps the saved settings.
 
-On B1051C firmware 4.9.0, choose **Set as B1051C screensaver** under **Set as** to apply the current image directly. QuickPic saves a separate 1860 × 2480 PNG before handing it to the system; the original is kept. Choose Confirm to continue; a short success message appears when processing finishes. Cancel leaves it unchanged.
+A clean first installation detects the device once to choose an initial screensaver action. Reopening or updating the app does not repeat detection or overwrite manual choices. Updates from older versions preserve existing choices; the new BOOX action is hidden until enabled manually.
+
+The general PNG action saves files in `QuickPic-Screensaver`. Under **Settings → View → Image → Screensaver image size** (設定屏保圖尺寸), enter a width and height or detect the current screen pixels, then save. QuickPic crops the largest centered area matching the target aspect ratio and resizes it to the exact output dimensions. The default is 1860 × 2480 pixels. Restore defaults (恢復預設) fills in that size; Save applies it.
+
+Direct actions prepare a separate image copy and keep the original. You can cancel before confirming. B1051C firmware 4.8.8 and 4.9.0 use different original components, whose identity and version are checked before use. The BOOX action also requires a supported original service; compatibility does not extend automatically to every BOOX model or firmware. See [VALIDATION](VALIDATION.md) for tested scope.
 
 ### Modern Android and animated images
 

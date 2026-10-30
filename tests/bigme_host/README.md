@@ -3,10 +3,12 @@
 執行方式（沿用既有 Python／JDK，不安裝套件）：
 
 ```sh
-/opt/anaconda3/bin/python -B tests/bigme_host/run.py --oem-apk /path/to/audited/StandbyApp.apk
+python3 -B tests/bigme_host/run.py --oem-apk /path/to/audited/StandbyApp.apk --legacy-oem-apk /path/to/audited/XrzSettings.apk
 ```
 
 測試執行正式的 `BigmeScreensaver.java` 與 `ScreensaverPng.java`；Android 的套件管理、對話框、掃描器、Bitmap 解碼、Provider 呼叫均以窄 stub 取代。固定 APK／公開憑證的雜湊使用已核對原廠檔案，測試不改寫該檔，也不將它納入儲存庫。
+
+依韌體選擇 4.8.8／4.9.0 元件，確認同一操作不混用 Provider，並保留舊元件正常回傳 status=-1 的行為。
 
 涵蓋確認前只讀 metadata、取消不執行工作、陌生版本／元件／憑證／APK 拒絕、PNG 與掃描失敗拒絕、送出後未知結果不重試、授權與 client 清理，以及原始圖片不傳給 importer。PNG 測試包括完整 RGB fixture 與壞簽頭、尺寸、CRC、截斷、額外資料、區段順序、空資料、未知主要區段與長度溢位。
 

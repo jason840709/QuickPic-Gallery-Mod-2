@@ -31,11 +31,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * No private-file writes, sleep commands, retries or claimed commit acknowledgement.
  */
 public final class BigmeScreensaver {
-    private static final String PACKAGE = "com.xrz.standby";
-    private static final String AUTHORITY = "com.xrz.LogoProvider";
-    private static final String PROVIDER = "com.xrz.settings.provider.LogoProvider";
     private static final String CERT = "ec4bb6c0f4c281829f7ec09a20d3350fd0d9486fa896b2aa8f27e01ebc85bdf4";
-    private static final String APK = "d1cb4a72d337e55e3f523a6760d9017db11dd7ae58adb301e5f15172549ba215";
+    private static final class Target {
+        final String firmware, packageName, authority, providerClass, apkSha256;
+        final int versionCode;
+        Target(String firmware, String packageName, String authority,
+                String providerClass, int versionCode, String apkSha256) {
+            this.firmware = firmware; this.packageName = packageName;
+            this.authority = authority; this.providerClass = providerClass;
+            this.versionCode = versionCode; this.apkSha256 = apkSha256;
+        }
+    }
+    private static final Target CURRENT = new Target("B1051C_R_4.9.0",
+            "com.xrz.standby", "com.xrz.LogoProvider",
+            "com.xrz.settings.provider.LogoProvider", 11115,
+            "d1cb4a72d337e55e3f523a6760d9017db11dd7ae58adb301e5f15172549ba215");
+    private static final Target LEGACY = new Target("B1051C_R_4.8.8",
+            "com.xrz.settings", "com.xrz.SettingProvider",
+            "com.xrz.settings.provider.SettingProvider", 40105,
+            "d3eae14d99e86861c082c1d6e1b1d07de16207fb383176dd279b1fb721ada24d");
     private static final int WIDTH = 1860, HEIGHT = 2480;
     private static final long MAX_BYTES = 24L * 1024 * 1024;
     private static final AtomicBoolean ACTIVE = new AtomicBoolean();
@@ -47,7 +61,7 @@ public final class BigmeScreensaver {
         if (context == null) return;
         if (ACTIVE.get()) { message(context, "正在處理屏保圖片，請稍候"); return; }
         try {
-            target(context, false);
+            final Target selected = target(context, false);
             if (source == null || !new File(source).isFile() || !new File(source).canRead()) {
                 throw new IOException("來源圖片無法讀取");
             }
@@ -57,7 +71,7 @@ public final class BigmeScreensaver {
                 .setNegativeButton("取消", null)
                 .setPositiveButton("確認", new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
-                        start(context.getApplicationContext(), source);
+                        start(context.getApplicationContext(), source, selected);
                     }
                 }).show();
         } catch (Exception error) {
@@ -65,13 +79,13 @@ public final class BigmeScreensaver {
         }
     }
 
-    private static void start(final Context context, final String source) {
+    private static void start(final Context context, final String source, final Target selected) {
         if (!ACTIVE.compareAndSet(false, true)) {
             message(context, "正在處理屏保圖片，請稍候"); return;
         }
         try {
             Thread worker = new Thread(new Runnable() {
-                @Override public void run() { apply(context, source); }
+                @Override public void run() { apply(context, source, selected); }
             }, "QuickPic-StandbyImport");
             worker.setPriority(Thread.NORM_PRIORITY - 1);
             worker.start();
@@ -82,11 +96,17 @@ public final class BigmeScreensaver {
     }
 
     private static void apply(Context context, String source) {
+        apply(context, source, null);
+    }
+
+    private static void apply(Context context, String source, Target confirmed) {
         boolean submitted = false;
         Uri media = null;
         ContentProviderClient client = null;
         try {
-            target(context, true);
+            // Select once; confirmation and every subsequent check stay on this target.
+            Target selected = confirmed == null ? target(context, true) : confirmed;
+            if (confirmed != null) target(context, selected, true);
             if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
                 throw new IOException("內部共用儲存空間尚未就緒");
             }
@@ -97,22 +117,24 @@ public final class BigmeScreensaver {
             File picture = ScreensaverImage.prepare(source, WIDTH, HEIGHT, directory, false);
             validateImage(picture);
             media = publish(context, picture);
-            context.grantUriPermission(PACKAGE, media, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            context.grantUriPermission(selected.packageName, media, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             // The importer needs a raw path. Media visibility/grant improves compatibility,
             // but does NOT prove another UID's raw-path access or atomic destination writes.
-            target(context, false);
+            target(context, selected, false);
             validateImage(picture);
             if (new StatFs(Environment.getDataDirectory().getAbsolutePath()).getAvailableBytes()
                     < picture.length() + 64L * 1024 * 1024) {
                 throw new IOException("系統儲存空間不足，已停止套用");
             }
             client = context.getContentResolver().acquireContentProviderClient(
-                    Uri.parse("content://" + AUTHORITY));
+                    Uri.parse("content://" + selected.authority));
             if (client == null) throw new IOException("無法連接原廠屏保元件");
             // One call only. OEM code deletes this disposable input after copying.
             // Any result/exception after this boundary is an UNKNOWN commit outcome.
             submitted = true;
+            // Legacy normally returns status=-1; neither target provides commit acknowledgement.
             client.call("set_screensaver", picture.getAbsolutePath(), null);
+            target(context, selected, false);
             // The audited importer removes its disposable input only after copying.
             // Detect a swallowed copy failure instead of displaying success on every return.
             if (picture.exists()) throw new IOException("設定屏保失敗");
@@ -131,29 +153,47 @@ public final class BigmeScreensaver {
         }
     }
 
-    private static void target(Context context, boolean verifyApk) throws Exception {
-        // Build.MODEL is generic on this firmware; use the same read-only properties as OEM.
+    /** Read-only capability check: no APK hashing, provider acquisition or OEM calls. */
+    public static boolean isSupported(Context context) {
+        if (context == null) return false;
+        try { target(context, false); return true; }
+        catch (Exception unavailable) { return false; }
+        catch (LinkageError unavailable) { return false; }
+    }
+
+    private static Target target(Context context, boolean verifyApk) throws Exception {
+        String firmware = property("ro.build.versionName");
+        Target selected = CURRENT.firmware.equals(firmware) ? CURRENT
+                : (LEGACY.firmware.equals(firmware) ? LEGACY : null);
+        if (selected == null) throw new IOException("此入口目前只支援已核對的 B1051C 4.8.8／4.9.0 系統");
+        target(context, selected, verifyApk);
+        return selected;
+    }
+
+    private static void target(Context context, Target selected, boolean verifyApk) throws Exception {
+        // Build.MODEL is generic on these firmwares. Never reselect another importer mid-operation.
         if (!"B1051C".equals(property("ro.build.versionCode"))
-                || !"B1051C_R_4.9.0".equals(property("ro.build.versionName"))) {
-            throw new IOException("此入口目前只支援已核對的 B1051C 4.9.0 系統");
+                || !selected.firmware.equals(property("ro.build.versionName"))) {
+            throw new IOException("系統版本與已確認的屏保元件不符，已停止套用");
         }
         PackageManager pm = context.getPackageManager();
-        ProviderInfo provider = pm.resolveContentProvider(AUTHORITY, 0);
+        ProviderInfo provider = pm.resolveContentProvider(selected.authority, 0);
         if (provider == null || !provider.enabled || !provider.exported
-                || !PACKAGE.equals(provider.packageName) || !PROVIDER.equals(provider.name)
-                || !AUTHORITY.equals(provider.authority) || provider.applicationInfo == null
+                || !selected.packageName.equals(provider.packageName)
+                || !selected.providerClass.equals(provider.name)
+                || !selected.authority.equals(provider.authority) || provider.applicationInfo == null
                 || !provider.applicationInfo.enabled || provider.applicationInfo.uid != 1000
                 || (provider.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0
                 || provider.readPermission != null || provider.writePermission != null) {
             throw new IOException("原廠屏保元件與已核對版本不符，已停止套用");
         }
-        PackageInfo info = pm.getPackageInfo(PACKAGE, PackageManager.GET_SIGNATURES);
-        if (info.versionCode != 11115 || info.signatures == null || info.signatures.length != 1
+        PackageInfo info = pm.getPackageInfo(selected.packageName, PackageManager.GET_SIGNATURES);
+        if (info.versionCode != selected.versionCode || info.signatures == null || info.signatures.length != 1
                 || !CERT.equals(hex(MessageDigest.getInstance("SHA-256")
                         .digest(info.signatures[0].toByteArray())))) {
             throw new IOException("原廠屏保版本或簽章不符，已停止套用");
         }
-        if (verifyApk && !APK.equals(digest(new File(provider.applicationInfo.sourceDir)))) {
+        if (verifyApk && !selected.apkSha256.equals(digest(new File(provider.applicationInfo.sourceDir)))) {
             throw new IOException("原廠屏保程式內容已變更，需要重新核對相容性");
         }
     }

@@ -12,15 +12,15 @@
 1eb348eab476fda8f4be42b64c438767d60a65daa61aebc9b6c818c0bdf10405
 ```
 
-SHA-256 是檔案內容的校驗值，腳本會先核對，避免把補丁套在不同的 App 上。腳本也保留開發時使用的 `8.8.5-XPhotoPNG-0.0.4-Clone1` 衍生基底支援，其校驗值為 `8a707e4285e22e668d50305864d05eb968ea584a56ec2d89e1ce50336fd5c605`；該歷史基底未放在倉庫內，也不是上游官方 APK 的通用替代名稱。
+SHA-256 是檔案內容的校驗值。腳本會先核對固定基底，結構不符時停止，不將補丁套用到其他同名 APK。
 
 ## 所需工具
 
 - Python 3.9 或更新版本。
 - JDK 17 或更新版本，`java` 與 `javac` 可由命令列執行。
 - Android SDK Platform 36 的 `android.jar`。
-- Android SDK Build Tools 36.0.0 的 `d8.jar`、`apksigner.jar` 與 `zipalign`。
-- Apktool 2.12.1，可執行檔或 JAR。
+- Android SDK Build Tools 34.0.0 的 `apksigner.jar` 與 `zipalign`，以及 36.0.0 的 `d8.jar`。
+- Apktool 2.11.1，可執行檔或 JAR。
 - 你自己的單一金鑰 keystore，以及只含 keystore 密碼的本機文字檔。
 
 keystore 是保存 Android 簽署金鑰的檔案。腳本支援檔案內只有一組金鑰，私鑰密碼與 keystore 密碼必須相同；建議使用 PKCS12 格式。工具與簽署金鑰由使用者自行提供。把 keystore 和密碼檔保存在倉庫以外，密碼檔只允許自己讀取，例如執行 `chmod 600`。後續更新同一套件時需保留相同簽署金鑰。
@@ -35,12 +35,12 @@ BASE_APK="$HOME/Downloads/QuickPic-Gallery-Mod-2-11.0.0.apk"
 SDK_DIR="$HOME/Library/Android/sdk"
 ANDROID_JAR="$SDK_DIR/platforms/android-36/android.jar"
 D8_JAR="$SDK_DIR/build-tools/36.0.0/lib/d8.jar"
-APKSIGNER_JAR="$SDK_DIR/build-tools/36.0.0/lib/apksigner.jar"
-ZIPALIGN="$SDK_DIR/build-tools/36.0.0/zipalign"
+APKSIGNER_JAR="$SDK_DIR/build-tools/34.0.0/lib/apksigner.jar"
+ZIPALIGN="$SDK_DIR/build-tools/34.0.0/zipalign"
 APKTOOL="$(command -v apktool)"
 SIGNING_KEYSTORE="$HOME/.quickpic-signing/local.p12"
 SIGNING_PASSWORD_FILE="$HOME/.quickpic-signing/password.txt"
-OUTPUT_APK="$HOME/Downloads/QuickPic-local-11.0.16.apk"
+OUTPUT_APK="$HOME/Downloads/QuickPic-local.apk"
 ```
 
 自行簽署的測試版使用不同套件名稱，可與正式版共存。執行：
@@ -61,7 +61,7 @@ python3 scripts/build.py \
 
 `--out` 指定新的 APK 檔案路徑，必須在倉庫以外，腳本也會拒絕覆寫現有檔案。`--apktool` 可指向 Apktool 可執行檔或 `.jar`。所有中間檔放在暫存目錄，結束時清除。完成後輸出 APK 的 SHA-256，並驗證簽章及 ZIP 對齊。
 
-建置產物的 App 名稱為「快圖」，版本為 `11.0.16`，版本代碼為 `11016001`，預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 改成自己的測試套件名稱。新套件可與舊 Clone 共存；首次安裝需重新設定偏好，舊版 App 的資料目錄不會自動移入。
+建置產物的 App 名稱為「快圖」；版本與版本代碼由 `scripts/build.py` 的 `VERSION_NAME`、`VERSION_CODE` 決定。預設套件名稱為 `io.github.jason840709.quickpic`，可用 `--package` 指定自己的測試套件。不同套件的偏好設定各自保存，舊 App 資料不會自動移入。
 
 ## 每一步修改的位置
 
@@ -71,13 +71,16 @@ python3 scripts/build.py \
 | `src/com/alensw/jni/QuickPicExif.java` | 讀寫圖片的拍攝中繼資料（EXIF），並在寫入前建立備份 |
 | `src/com/alensw/jni/CompatIntents.java` | 處理傳給外部 App 或回傳給呼叫者的圖片位址（URI）與讀取權限 |
 | `src/com/alensw/jni/ViewerControls.java` | 工具列、播放間隔與秒數浮窗 |
-| `src/com/alensw/jni/ScreensaverOpener.java` | 依序嘗試 XPhoto 與系統圖片開啟選擇器 |
+| `src/com/alensw/jni/ScreensaverOpener.java` | 以可授權的 content URI 將 PNG 交給系統 App 選擇器 |
+| `src/com/alensw/jni/ScreensaverOptions.java`、`ScreensaverMenu.java` | 保存選項可見狀態，固定選單顯示時的動作對應 |
+| `src/com/alensw/jni/ScreensaverDevice.java` | 僅在乾淨首次安裝選擇屏保預設 |
+| `src/com/alensw/jni/BigmeScreensaver.java`、`BooxScreensaver.java` | 檢查支援的原廠元件，處理各自的直接屏保設定入口 |
 | `scripts/patch_core.py` | 在 App 啟動時交給 EXIF 程式快取目錄，並插入 Android 開啟／分享請求（Intent）與回傳圖片的相容處理 |
 | `scripts/patch_viewer.py` | 在兩個圖片檢視控制器插入工具列及秒數浮窗呼叫，調整圖片選單 |
 | `scripts/patch_defaults.py` | 開啟或回到前景時恢復顯示隱藏項目，保留原密碼驗證；首次安裝預設無轉場 |
-| `scripts/patch_animation.py` | WebP 候選辨識、預覽升級與動畫排程呼叫 |
+| `scripts/patch_animation.py` | WebP 內容辨識、預覽升級與動畫排程呼叫 |
 | `scripts/patch_xphoto.py` | 更新既有 XPhoto 開啟接點 |
-| `scripts/patch_screensaver.py` | 新增檢視尺寸設定，將原背景產圖入口接到可設定尺寸的 PNG 流程 |
+| `scripts/patch_screensaver.py` | 串接尺寸／選項設定、選單動作及首次初始化 |
 | `scripts/patch_about.py` | 整理關於頁、貢獻者、GitHub 與 FAQ |
 | `scripts/patch_normalize.py` | 統一套件、App 名稱及版本，移除原生函式庫，更新輸出目錄與更新連結 |
 | `scripts/build.py` | 校驗基底 APK、編譯 Java、以 D8 轉換程式、併入修補、重建及簽署 |
@@ -104,11 +107,11 @@ python3 tests/run_exif.py
 python3 tests/xphoto_host/run.py
 ```
 
-XPhoto 測試使用假的 Android API 檢查 15 種開啟情境與 Intent 內容；EXIF 測試使用合成 JPEG、TIFF 中繼資料與非 JPEG 拒絕案例檢查讀寫行為。也可用 `python3 tests/xphoto_host/run.py --android-jar "$ANDROID_JAR"` 檢查圖片開啟程式與 Android API 的編譯相容性。
+圖片開啟路由測試使用 Android API 替身檢查 App 選擇器、Intent、URI 與授權內容；EXIF 測試使用合成 JPEG、TIFF 中繼資料與非 JPEG 拒絕案例檢查讀寫行為。也可用 `python3 tests/xphoto_host/run.py --android-jar "$ANDROID_JAR"` 檢查圖片開啟程式與 Android API 的編譯相容性。
 
 主機測試完成後，仍需在實機檢查安裝、權限、資料夾瀏覽、圖片顯示、分享、播放間隔，以及 PNG 保存和開啟。實際 Android 權限與裝置廠商提供的圖片選擇器由裝置測試確認。
 
-每次交付修改過的 APK 都使用未交付的版本號。已交付候選可在檔案及 SHA-256 完全相同時轉為同版本正式發行；修改 APK 後必須升版。重新建置既有來源供本機檢查時，輸出另存，不替換歷史發行檔。
+修改程式並發布新 APK 時，請更新版本名稱與版本代碼。重建既有來源供本機檢查時，輸出另存，保留原發行檔及其校驗值。
 
 預設值與手動開圖的實際方法測試需自備最終 APK 的 apktool decode 及 JADX sources；反編譯 App 程式不加入公開倉庫：
 
@@ -123,17 +126,17 @@ python3 tests/manual_open_host/run.py --sources /path/to/jadx/sources --work-dir
 python3 scripts/check_local_links.py --decoded /path/to/decoded --output-json /path/to/private/startup-links.json
 ```
 
-這項檢查能攔下11.0.2的錯誤呼叫；它不執行Android啟動。修改啟動流程後，正式APK仍須確認完整App能在Android啟動，不能以主機測試或JNI裝置檢查代替。
+這項檢查核對方法名稱、參數及回傳型別，但不執行 Android 啟動流程。修改啟動程式後，仍須安裝最終 APK 並確認完整 App 能啟動。
 
 ## 掃描與日期排序檢查
 
-執行 `python tests/media_dates_host/run.py` 與 `python tests/date_sort_host/run.py` 驗證日期索引和排序。掃描檢查使用 `python tests/scan_priority_host/run.py --decoded <最終APK的解碼目錄> --baseline-decoded <11.0.3解碼目錄> --work-dir <工作目錄> --output-json <報告>`，涵蓋實際控制流與佇列案例。主機 API 替身、DEX 成員核對及手機操作各自記錄；正式發布前仍須確認同一 APK 在 Android 正常啟動。
+執行 `python tests/media_dates_host/run.py` 與 `python tests/date_sort_host/run.py` 驗證日期索引和排序。掃描檢查使用 `python tests/scan_priority_host/run.py --decoded <最終APK的解碼目錄> --baseline-decoded <比較基底的解碼目錄> --work-dir <工作目錄> --output-json <報告>`，涵蓋實際控制流與佇列案例。主機 API 替身、DEX 成員核對及手機操作各自記錄；正式發布前仍須確認同一 APK 在 Android 正常啟動。
 
 ## 看圖與設定介面檢查
 
 `python tests/viewer_controls_host/run.py` 使用實際輔助程式測試工具列、主題與自訂秒數；`python tests/folder_path_host/run.py --decoded <原APK解碼目錄> --work-dir <工作目錄>`核對路徑編輯補丁；`python tests/about_history_host/run.py --decoded <原APK解碼目錄>`檢查離線歷史頁、最新／完整紀錄兩部分，以及將舊E-Ink內容歸入11.0.0後的功能保全。最終APK仍須核對原有public資源ID、新layout連結與DEX方法簽名；手機排版和鍵盤需另外驗收。
 
-11.0.6的間隔視窗使用可捲動的單一內容區。選項按鈕直接套用已保存的秒數，輸入欄的新值只由「套用自訂」保存；主機測試分別核對這兩種操作及1～86400秒範圍。輸入欄的左邊界取自實際主題單選按鈕的文字內距，工具列的計時器向量沿用原資源ID。實際螢幕、字體放大與鍵盤顯示仍需裝置確認。
+投影片間隔視窗使用可捲動的單一內容區。選項按鈕直接套用已保存的秒數，輸入欄的新值只由「套用自訂」保存；主機測試分別核對這兩種操作及1～86400秒範圍。輸入欄的左邊界取自實際主題單選按鈕的文字內距，工具列的計時器向量沿用原資源ID。實際螢幕、字體放大與鍵盤顯示仍需裝置確認。
 
 ## 刪除流程檢查
 
@@ -160,3 +163,12 @@ python3 -B tests/reader_mode_host/run.py --output-json /tmp/reader-mode.json
 補丁只支援已核對的固定基底。它會先檢查所有切點，再寫入解碼工作副本；組譯前可重套，重組譯後 label 會改名，不能把重套到最終重新解碼檔的結果當成相同檢查。
 
 屏保尺寸與裁切設計見 [SCREENSAVER.md](SCREENSAVER.md)。裁切、EXIF、PNG 與失敗清理的主機檢查：`python3 tests/screensaver_host/renderer/run.py --android-jar "$ANDROID_JAR"`；使用 Java2D 替身，實際 Android 解碼另驗證。
+
+
+## 屏保選項與首次安裝
+
+```sh
+python3 -B tests/screensaver_options_host/run.py
+```
+
+這組主機測試執行實際選項與選單輔助程式，核對可見項目的動作對應、全部隱藏、取消不保存、更新保留設定，以及僅乾淨首次安裝選擇預設。Android 介面、偏好與裝置判斷使用測試替身；原廠套用結果需另在對應裝置確認。

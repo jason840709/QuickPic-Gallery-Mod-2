@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.example.urireceiver">
+  <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>
+  <!-- Deliberately no storage or all-files permission: reads must use the received URI. -->
+  <application android:label="PNG URI 測試接收器" android:allowBackup="false">
+    <activity android:name=".ReceiveActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="content" android:mimeType="image/png"/>
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

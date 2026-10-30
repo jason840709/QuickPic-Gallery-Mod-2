@@ -20,7 +20,7 @@ import java.util.zip.DeflaterOutputStream;
 
 /** Executes production bridge/validator. Android, image rendering and OEM IPC are doubles. */
 public final class BigmeProbe {
-    static File apk,root,source,valid;
+    static File apk,legacyApk,root,source,valid;
     static byte[] cert,sourceBytes;
     static int passed;
     static Method apply;
@@ -55,8 +55,72 @@ public final class BigmeProbe {
         File f=new File(root,"reject-"+name+".png");Files.write(f.toPath(),data);
         try{ScreensaverPng.verify(f,width,height,max);throw new AssertionError("Accepted malformed PNG: "+name);}catch(IOException expected){passed++;}
     }
+    static Context legacy() throws Exception {
+        Context c=fresh();
+        SystemProperties.version="B1051C_R_4.8.8";
+        c.pm.provider.packageName="com.xrz.settings";
+        c.pm.provider.name="com.xrz.settings.provider.SettingProvider";
+        c.pm.provider.authority="com.xrz.SettingProvider";
+        c.pm.provider.applicationInfo.sourceDir=legacyApk.getAbsolutePath();
+        c.pm.info.versionCode=40105;
+        return c;
+    }
+    static void compatibilityChecks() throws Exception {
+        Context c=fresh();
+        c.pm.provider.applicationInfo.sourceDir="/not/read/for/metadata-only";
+        check(BigmeScreensaver.isSupported(c),"Current metadata support absent");
+        check(c.resolver.acquired==0&&ScreensaverImage.calls==0,"Support check starts provider or renderer");passed++;
+        c=legacy();c.pm.provider.applicationInfo.sourceDir="/not/read/for/metadata-only";
+        check(BigmeScreensaver.isSupported(c),"Legacy metadata support absent");
+        check(c.resolver.acquired==0&&ScreensaverImage.calls==0,"Legacy support check starts work");passed++;
+        check(!BigmeScreensaver.isSupported(null),"Null context supported");passed++;
+        c=fresh();SystemProperties.version="B1051C_R_4.8.9";
+        check(!BigmeScreensaver.isSupported(c)&&c.resolver.acquired==0,"Unknown firmware supported");passed++;
+        c=legacy();c.pm.provider.packageName="com.xrz.standby";
+        check(!BigmeScreensaver.isSupported(c),"Legacy accepted new package");noCall(c,"legacy with new package");
+        c=fresh();c.pm.provider.packageName="com.xrz.settings";
+        check(!BigmeScreensaver.isSupported(c),"Current accepted old package");noCall(c,"current with old package");
+        c=legacy();c.pm.info.versionCode=40106;noCall(c,"legacy wrong version");
+        c=legacy();c.pm.provider.name="com.xrz.settings.provider.LogoProvider";noCall(c,"legacy wrong class");
+        c=legacy();c.pm.provider.authority="com.xrz.LogoProvider";noCall(c,"legacy wrong authority");
+        c=legacy();c.pm.provider.applicationInfo.uid=2000;noCall(c,"legacy wrong UID");
+        c=legacy();c.pm.provider.applicationInfo.flags=0;noCall(c,"legacy non-system app");
+        c=legacy();c.pm.info.signatures=new Signature[]{new Signature(new byte[]{1})};noCall(c,"legacy wrong certificate");
+        c=legacy();c.pm.provider.applicationInfo.sourceDir=apk.getAbsolutePath();noCall(c,"legacy using new APK");
+        c=fresh();c.pm.provider.applicationInfo.sourceDir=legacyApk.getAbsolutePath();noCall(c,"current using legacy APK");
+        c=legacy();c.resolver.client.deleteInput=true;
+        // Real legacy implementation returns a Bundle with status=-1; result is intentionally not inspected.
+        Map<String,Integer> negativeStatus=new HashMap<String,Integer>();negativeStatus.put("status",-1);
+        c.resolver.client.result=negativeStatus;
+        apply.invoke(null,c,source.getAbsolutePath());
+        check(c.resolver.client.calls==1&&"設定成功".equals(Toast.last),"Legacy -1 return falsely rejected");
+        check("com.xrz.settings".equals(c.grantedPackage),"Grant mixed target package");
+        check("com.xrz.SettingProvider".equals(c.resolver.acquiredUri.getAuthority()),"Wrong legacy IPC authority");
+        check("com.xrz.settings".equals(c.pm.requestedPackage),"Wrong legacy package check");
+        check(c.grants==1&&c.revokes==1&&c.resolver.client.releases==1,"Legacy resources not released");
+        check(Arrays.equals(sourceBytes,Files.readAllBytes(source.toPath())),"Legacy importer touched original");passed++;
+        c=legacy();c.resolver.client.deleteInput=false;apply.invoke(null,c,source.getAbsolutePath());
+        check(c.resolver.client.calls==1&&"設定屏保時發生錯誤".equals(Toast.last),"Legacy silent copy failure accepted");passed++;
+        c=legacy();c.resolver.client.deleteInput=true;c.resolver.client.fail=true;apply.invoke(null,c,source.getAbsolutePath());
+        check(c.resolver.client.calls==1&&c.resolver.client.releases==1&&c.revokes==1,"Legacy error retried or leaked");
+        check("設定屏保時發生錯誤".equals(Toast.last),"Legacy exception claimed success");passed++;
+        // Confirmation target remains fixed even if properties and metadata both change to another valid target.
+        c=legacy();Method choose=BigmeScreensaver.class.getDeclaredMethod("target",Context.class,boolean.class);choose.setAccessible(true);
+        Object confirmed=choose.invoke(null,c,false);Class<?> targetType=confirmed.getClass();
+        Method applyConfirmed=BigmeScreensaver.class.getDeclaredMethod("apply",Context.class,String.class,targetType);applyConfirmed.setAccessible(true);
+        SystemProperties.version="B1051C_R_4.9.0";c.pm.provider.packageName="com.xrz.standby";
+        c.pm.provider.name="com.xrz.settings.provider.LogoProvider";c.pm.provider.authority="com.xrz.LogoProvider";
+        c.pm.provider.applicationInfo.sourceDir=apk.getAbsolutePath();c.pm.info.versionCode=11115;
+        applyConfirmed.invoke(null,c,source.getAbsolutePath(),confirmed);
+        check(c.resolver.acquired==0&&ScreensaverImage.calls==0,"Confirmed legacy target silently reselected");passed++;
+        c=legacy();c.resolver.client.deleteInput=true;
+        c.resolver.client.afterCall=new Runnable(){public void run(){SystemProperties.version="B1051C_R_4.9.0";}};
+        apply.invoke(null,c,source.getAbsolutePath());
+        check(c.resolver.client.calls==1&&"com.xrz.SettingProvider".equals(c.resolver.acquiredUri.getAuthority()),"Post-call target mixed");
+        check("設定屏保時發生錯誤".equals(Toast.last)&&c.revokes==1,"Version drift after call claimed success or leaked");passed++;
+    }
     public static void main(String[] args)throws Exception{
-        apk=new File(args[0]);cert=Files.readAllBytes(new File(args[1]).toPath());root=new File(args[2]);root.mkdirs();
+        legacyApk=new File(args[3]);apk=new File(args[0]);cert=Files.readAllBytes(new File(args[1]).toPath());root=new File(args[2]);root.mkdirs();
         source=new File(root,"original-source.jpg");sourceBytes="untouched-original-source".getBytes("UTF-8");Files.write(source.toPath(),sourceBytes);
         byte[] hdr=header(1860,2480,2),data=idat(1860,2480),end=chunk("IEND",new byte[0]);
         byte[] png=join(MAGIC,hdr,data,end);valid=new File(root,"valid-rgb-fixture.png");Files.write(valid.toPath(),png);
@@ -122,6 +186,8 @@ public final class BigmeProbe {
         rejectPng("unknown-critical",join(MAGIC,header(2,3,2),chunk("ABCD",new byte[0]),idat(2,3),end),2,3,10000);
         byte[] crc=small.clone();crc[29]^=1;rejectPng("crc",crc,2,3,10000);
         byte[] overflow=small.clone();Arrays.fill(overflow,33,37,(byte)255);rejectPng("huge-chunk",overflow,2,3,10000);
+        check(passed==44,"Original host checks changed: "+passed);
+        compatibilityChecks();
         System.out.println("PASS "+passed+" production bridge/PNG host checks; Android/render/IPC doubles only; no device or OEM writes");
     }
 }

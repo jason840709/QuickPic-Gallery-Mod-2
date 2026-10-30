@@ -2,7 +2,7 @@
 
 ## 本專案
 
-**Jason Chen** 維護 QuickPic Gallery Mod II，GitHub 帳號為 [jason840709](https://github.com/jason840709)。Jason Chen 也製作了先前版本的 E-Ink 優化，包含無動畫、點擊翻頁、資料夾路徑編輯及螢幕保護功能。本次工作接續這些功能，加入新版 Android 相容性修補、Java 原生介面替代程式、圖片檢視控制、螢幕保護圖片開啟流程，以及公開建置與測試文件。
+**Jason Chen** 維護 QuickPic Gallery Mod II，GitHub 帳號為 [jason840709](https://github.com/jason840709)。Jason Chen 也製作了先前版本的 E-Ink 優化，包含無動畫、點擊翻頁、資料夾路徑編輯及螢幕保護功能。維護內容包含新版 Android 相容性修補、Java 原生介面替代程式、圖片檢視控制、螢幕保護圖片開啟流程，以及公開建置與測試文件。
 
 ## 上游
 

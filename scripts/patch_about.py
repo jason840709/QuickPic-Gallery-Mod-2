@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.15", "11.0.16", "11.0.17", "11.0.18")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.18",
+        "version_number": "11.0.20",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -253,32 +253,33 @@ def replacement_strings(path):
         latest = "Changes in 11.0.14\\nAdd Reader mode: keep the current page until the next complete image is ready, without a blurry preview or loading text.\\nWorks for manual page turns and slideshows. Reduces flicker with increased page-turn delay."
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.15 更新\\n设置→检视新增屏保图尺寸，可自定义宽高或检测当前屏幕像素。\\n按目标比例从图片中央裁出最大范围，再输出指定尺寸的 PNG；未设置时保留 1860×2480。"
+        latest = '11.0.16 更新\\n可自订屏保 PNG 的宽高，或检测屏幕像素；按比例置中裁切，并提供恢复默认。'
     elif chinese:
-        latest = "11.0.15 更新\\n設定→檢視新增屏保圖尺寸，可自訂寬高或偵測目前螢幕像素。\\n依目標比例從圖片中央裁出最大範圍，再輸出指定尺寸的 PNG；未設定時保留 1860×2480。"
+        latest = '11.0.16 更新\\n可自訂屏保 PNG 的寬高，或偵測螢幕像素；依比例置中裁切，並提供恢復預設。'
     else:
-        latest = "Changes in 11.0.15\\nAdd screensaver image size under Settings → View: enter width and height or detect the current screen pixels.\\nUse the largest centered crop matching the target ratio and export an exact-size PNG. Keep 1860×2480 until configured."
+        latest = 'Changes in 11.0.16\\nSet PNG width and height or detect screen pixels; use a centered crop and restore defaults.'
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.16 更新\\n屏保图尺寸窗口新增「恢复默认」按钮，可填回 1860×2480，再保存套用。"
+        latest = '11.0.18 更新\\n新增 B1051C 屏保入口，图片转换为 PNG 后交给系统套用，原图保留；完成显示「设置成功」。'
     elif chinese:
-        latest = "11.0.16 更新\\n屏保圖尺寸視窗新增「恢復預設」按鈕，可填回 1860×2480，再儲存套用。"
+        latest = '11.0.18 更新\\n新增 B1051C 屏保入口，圖片轉為 PNG 後交給系統套用，原圖保留；完成顯示「設定成功」。'
     else:
-        latest = "Changes in 11.0.16\\nAdd Restore defaults beside the screensaver size fields. Fill in 1860×2480, then save to apply."
+        latest = 'Changes in 11.0.18\\nSet the current image as a B1051C screensaver using a separate PNG; keep the original and show a completion message.'
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 专用屏保入口，独立于原图片查看器流程。先转换并检查 1860×2480 PNG，再经确认交给原厂套用。"
+        latest = '11.0.19 更新\\n设置→检视→图片新增「显示屏保选项」，可分别显示或隐藏普通与 B1051C 屏保入口；桌布选项保留。'
     elif chinese:
-        latest = "11.0.17 更新\\n新增 B1051C 4.9.0 專用屏保入口，獨立於原圖片檢視器流程。先轉換並檢查 1860×2480 PNG，再經確認交給原廠套用。"
+        latest = '11.0.19 更新\\n設定→檢視→圖片新增「顯示屏保選項」，可分別顯示或隱藏一般與 B1051C 屏保入口；桌布選項保留。'
     else:
-        latest = "Changes in 11.0.17\\nAdd a separate screensaver import for the verified B1051C 4.9.0 system. Convert and validate a 1860×2480 PNG before confirmation and OEM import."
+        latest = 'Changes in 11.0.19\\nChoose which screensaver actions appear under Set as in Settings → View → Pictures. Wallpaper remains available.'
+    strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.18 更新\\nB1051C 屏保设置已确认可用。确认窗口只保留 PNG 转换说明，按钮改为「确认／取消」，完成后显示「设置成功」，失败时显示错误。"
+        latest = "11.0.20 更新\n新增文石屏保入口；首次安装依机型选择默认屏保选项，可在设置中自行开关。一般屏保入口直接选择其他 App 开启 PNG。支持 B1051C 4.8.8 与 4.9.0 的原厂屏保接口。"
     elif chinese:
-        latest = "11.0.18 更新\\nB1051C 屏保設定已確認可用。確認視窗只保留 PNG 轉換說明，按鈕改為「確認／取消」，完成後顯示「設定成功」，失敗時顯示錯誤。"
+        latest = "11.0.20 更新\n新增文石屏保入口；首次安裝依機型選擇預設屏保選項，可在設定中自行開關。一般屏保入口直接選擇其他 App 開啟 PNG。支援 B1051C 4.8.8 與 4.9.0 的原廠屏保介面。"
     else:
-        latest = "Changes in 11.0.18\\nB1051C screensaver import is confirmed working. Keep only the PNG conversion description, use Confirm/Cancel, and show a short success or error message when processing finishes."
+        latest = "Changes in 11.0.20\nAdd the BOOX screensaver action, choose defaults on first installation only, and keep manual visibility settings. The generic action opens an app chooser. Support B1051C 4.8.8 and 4.9.0 screensaver interfaces."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
