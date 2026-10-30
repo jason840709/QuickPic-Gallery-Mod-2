@@ -56,7 +56,7 @@ class BuildTests(unittest.TestCase):
 
     def test_formal_release_identity(self):
         self.assertEqual((build.PACKAGE, build.VERSION_NAME, build.VERSION_CODE),
-                         ("io.github.jason840709.quickpic", "11.0.18", 11018001))
+                         ("io.github.jason840709.quickpic", "11.0.18", 11018002))
 
     def test_native_output_rejected(self):
         import zipfile

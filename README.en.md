@@ -38,7 +38,7 @@ Under Settings → View → Screensaver image size (設定屏保圖尺寸), ente
 
 The app first tries XPhoto. If XPhoto is unavailable or cannot open the image, you can choose another image app. Finish assigning the PNG as the device screensaver in XPhoto or your e-reader’s system settings.
 
-On B1051C firmware 4.9.0, choose **Set as B1051C screensaver** under **Set as** to apply the current image directly. QuickPic saves a separate 1860 × 2480 PNG before handing it to the system; the original is kept. Choose Confirm to continue or Cancel to leave it unchanged.
+On B1051C firmware 4.9.0, choose **Set as B1051C screensaver** under **Set as** to apply the current image directly. QuickPic saves a separate 1860 × 2480 PNG before handing it to the system; the original is kept. Choose Confirm to continue; a short success message appears when processing finishes. Cancel leaves it unchanged.
 
 ### Modern Android and animated images
 

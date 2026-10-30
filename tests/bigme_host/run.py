@@ -35,7 +35,7 @@ STUBS = {
 'android/os/StatFs.java': '''package android.os; public class StatFs {public static long available=1L<<40;public StatFs(String p){}public long getAvailableBytes(){return available;} }''',
 'android/os/Looper.java': '''package android.os;public class Looper{public static Looper getMainLooper(){return new Looper();}}''',
 'android/os/Handler.java': '''package android.os;public class Handler{public Handler(Looper l){}public boolean post(Runnable r){r.run();return true;}}''',
-'android/widget/Toast.java': '''package android.widget;import android.content.*;public class Toast{public static final int LENGTH_LONG=1;public static String last;public static Toast makeText(Context c,String s,int n){last=s;return new Toast();}public void show(){}}''',
+'android/widget/Toast.java': '''package android.widget;import android.content.*;public class Toast{public static final int LENGTH_LONG=1;public static String last;public static Toast makeText(Context c,String s,int n){last=s;return new Toast();}public void show(){}public void cancel(){}}''',
 'com/alensw/jni/ScreensaverImage.java': '''package com.alensw.jni;import java.io.*;import java.nio.file.*;public class ScreensaverImage{public static File fixture,last;public static String source;public static int calls;public static boolean corrupt;public static File prepare(String s,int w,int h,File d,boolean exclude)throws IOException{calls++;source=s;if(exclude)throw new AssertionError("OEM export must stay media visible");d.mkdirs();last=new File(d,"host-disposable-"+calls+".png");Files.copy(fixture.toPath(),last.toPath());if(corrupt)try(RandomAccessFile f=new RandomAccessFile(last,"rw")){f.seek(29);f.write(42);}return last;}}''',
 }
 

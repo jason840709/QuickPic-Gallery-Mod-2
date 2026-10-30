@@ -39,6 +39,7 @@ public final class BigmeScreensaver {
     private static final int WIDTH = 1860, HEIGHT = 2480;
     private static final long MAX_BYTES = 24L * 1024 * 1024;
     private static final AtomicBoolean ACTIVE = new AtomicBoolean();
+    private static Toast currentToast;
     private BigmeScreensaver() {}
 
     /** Main-thread menu entry; metadata checks do not acquire/start the OEM provider. */
@@ -112,6 +113,10 @@ public final class BigmeScreensaver {
             // Any result/exception after this boundary is an UNKNOWN commit outcome.
             submitted = true;
             client.call("set_screensaver", picture.getAbsolutePath(), null);
+            // The audited importer removes its disposable input only after copying.
+            // Detect a swallowed copy failure instead of displaying success on every return.
+            if (picture.exists()) throw new IOException("設定屏保失敗");
+            message(context, "設定成功");
         } catch (OutOfMemoryError error) {
             message(context, "記憶體不足，無法完成屏保設定");
         } catch (Exception error) {
@@ -213,7 +218,9 @@ public final class BigmeScreensaver {
     private static void message(final Context context, final String text) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override public void run() {
-                Toast.makeText(context.getApplicationContext(), text, Toast.LENGTH_LONG).show();
+                if (currentToast != null) currentToast.cancel();
+                currentToast = Toast.makeText(context.getApplicationContext(), text, Toast.LENGTH_LONG);
+                currentToast.show();
             }
         });
     }

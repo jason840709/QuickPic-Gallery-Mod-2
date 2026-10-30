@@ -274,11 +274,11 @@ def replacement_strings(path):
         latest = "Changes in 11.0.17\\nAdd a separate screensaver import for the verified B1051C 4.9.0 system. Convert and validate a 1860×2480 PNG before confirmation and OEM import."
     strings["eink_features_content"] += "\\n\\n" + latest
     if simplified:
-        latest = "11.0.18 更新\\nB1051C 屏保设置已确认可用。确认窗口只保留 PNG 转换说明，按钮改为「确认／取消」，移除送出后的多余提示。"
+        latest = "11.0.18 更新\\nB1051C 屏保设置已确认可用。确认窗口只保留 PNG 转换说明，按钮改为「确认／取消」，完成后显示「设置成功」，失败时显示错误。"
     elif chinese:
-        latest = "11.0.18 更新\\nB1051C 屏保設定已確認可用。確認視窗只保留 PNG 轉換說明，按鈕改為「確認／取消」，移除送出後的多餘提示。"
+        latest = "11.0.18 更新\\nB1051C 屏保設定已確認可用。確認視窗只保留 PNG 轉換說明，按鈕改為「確認／取消」，完成後顯示「設定成功」，失敗時顯示錯誤。"
     else:
-        latest = "Changes in 11.0.18\\nB1051C screensaver import is confirmed working. Keep only the PNG conversion description, use Confirm/Cancel, and remove the extra submission notice."
+        latest = "Changes in 11.0.18\\nB1051C screensaver import is confirmed working. Keep only the PNG conversion description, use Confirm/Cancel, and show a short success or error message when processing finishes."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
