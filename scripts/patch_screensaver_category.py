@@ -2,6 +2,7 @@
 """Group the existing screensaver preferences without changing their saved keys."""
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 A='{http://schemas.android.com/apk/res/android}'
 def patch(root):
  root=Path(root);ET.register_namespace('android','http://schemas.android.com/apk/res/android')
@@ -18,7 +19,13 @@ def patch(root):
   category=ET.Element('PreferenceCategory',{A+'key':'screensaver_category',A+'title':'@string/quickpic_screensaver_category'})
   if group.get(A+'layout'):category.set(A+'layout',group.get(A+'layout'))
   for node in nodes:group.remove(node);category.append(node)
-  screen=parents[group];screen.insert(list(screen).index(group)+1,category)
+  screen=parents[group];index=list(screen).index(group)
+  if index<1:raise ValueError('Missing original section divider')
+  template=list(screen)[index-1]
+  if template.tag!='PreferenceCategory' or len(template) or template.get(A+'title') or not template.get(A+'layout'):
+   raise ValueError('Expected original empty divider before Image category')
+  separator=deepcopy(template);separator.set(A+'key','screensaver_separator')
+  screen.insert(index+1,separator);screen.insert(index+2,category)
   ET.indent(tree,space='    ');tree.write(path,encoding='utf-8',xml_declaration=True)
  for path in (root/'res').glob('values*/strings.xml'):
   tree=ET.parse(path);res=tree.getroot();key='quickpic_screensaver_category'

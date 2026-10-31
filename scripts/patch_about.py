@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.22",
+        "version_number": "11.0.23",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -296,6 +296,14 @@ def replacement_strings(path):
         latest = "11.0.22 更新\\n點擊翻頁改用直立平板示意圖，提供六種配置，新增 L 型與翻頁反轉開關。屏保相關設定集中至獨立分區。"
     else:
         latest = "Changes in 11.0.22\\nChoose from six portrait tap-area diagrams, including an L-shaped layout, with a switch to reverse page directions. Screensaver preferences now have their own section."
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.23 更新\\n点按翻页的启用与反转选项移到顶部同一行。屏保设置补上与其他分区相同的分隔线。点按翻页移到操作分区第一项。设置开关增加清晰的底色与勾选标记。"
+    elif chinese:
+        latest = "11.0.23 更新\\n點擊翻頁的啟用與反轉選項移到頂部同一行。屏保設定補上與其他分區相同的分隔線。點擊翻頁移到操作分區第一項。設定開關增加清楚的底色與勾選標記。"
+    else:
+        latest = "Changes in 11.0.23\\nPlace tap navigation and reverse checkboxes together at the top. Match the screensaver section divider to the other settings sections. Place tap navigation first under Controls. Give settings switches distinct backgrounds and a small check mark when enabled."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

@@ -17,7 +17,7 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Switch;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.Locale;
@@ -69,18 +69,18 @@ public final class TapPagePreference extends Preference {
         final int[] chosen = {mode(c) == 0 ? TapPageLayout.BOTTOM_CORNERS : mode(c)};
         final boolean[] reverse = {reversed(c)};
         final Diagram[] diagrams = new Diagram[MODES.length];
-        LinearLayout title = new LinearLayout(c);
-        title.setGravity(Gravity.CENTER_VERTICAL);
-        title.setPadding(dp(c,16), dp(c,10), dp(c,12), dp(c,4));
-        TextView heading = new TextView(c);
-        heading.setText(text(c,"Tap areas","點擊翻頁","点击翻页")); heading.setTextSize(20);
-        title.addView(heading, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT,1));
-        Switch flip = new Switch(c);
-        flip.setText(text(c,"Reverse","翻頁反轉","翻页反转")); flip.setTextSize(14);
-        flip.setSwitchPadding(dp(c,6)); flip.setMinHeight(dp(c,48)); flip.setChecked(reverse[0]);
-        title.addView(flip);
         LinearLayout content = new LinearLayout(c); content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(c,8), dp(c,4), dp(c,8),0);
+        LinearLayout options = new LinearLayout(c); options.setGravity(Gravity.CENTER_VERTICAL);
+        final CheckBox enabled = new CheckBox(c);
+        enabled.setText(text(c,"Enable tap navigation","啟用點擊翻頁","启用点击翻页"));
+        enabled.setTextSize(14); enabled.setChecked(mode(c) != 0); enabled.setMinHeight(dp(c,48));
+        options.addView(enabled,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        CheckBox flip = new CheckBox(c);
+        flip.setText(text(c,"Reverse","翻頁反轉","翻页反转")); flip.setTextSize(14);
+        flip.setMinHeight(dp(c,48)); flip.setChecked(reverse[0]);
+        options.addView(flip,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+        content.addView(options,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout grid = new LinearLayout(c); grid.setOrientation(LinearLayout.VERTICAL);
         for (int row=0;row<2;row++) {
             LinearLayout line = new LinearLayout(c);
@@ -112,12 +112,7 @@ public final class TapPagePreference extends Preference {
         legend.setTextSize(13); legend.setPadding(0,dp(c,8),0,dp(c,8));
         legend.setText(text(c,"← Previous     ☰ Menu     Next →","← 上一頁     ☰ 選單     下一頁 →","← 上一页     ☰ 菜单     下一页 →"));
         content.addView(legend);
-        final Switch enabled = new Switch(c);
-        enabled.setText(text(c,"Enable tap navigation","啟用點擊翻頁","启用点击翻页"));
-        enabled.setTextSize(16); enabled.setChecked(mode(c) != 0); enabled.setMinHeight(dp(c,48));
-        enabled.setPadding(dp(c,8),0,dp(c,8),0);
-        content.addView(enabled, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-        new AlertDialog.Builder(c).setCustomTitle(title).setView(content)
+        new AlertDialog.Builder(c).setTitle(text(c,"Tap to turn pages","點擊翻頁","点击翻页")).setView(content)
             .setNegativeButton(text(c,"Cancel","取消","取消"),null)
             .setPositiveButton(text(c,"Save","儲存","保存"),new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog,int which) {

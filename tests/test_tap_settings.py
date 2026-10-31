@@ -9,7 +9,7 @@ class SettingsPatch(unittest.TestCase):
   with tempfile.TemporaryDirectory()as tmp:
    r=Path(tmp);a=self.fixture(r);b=self.fixture(r,'xml-v30');self.assertEqual(len(patch.patch(r)),2);self.assertEqual(patch.patch(r),[])
    for p in [a,b]:
-    s=p.read_text();self.assertEqual(s.count('com.alensw.jni.TapPagePreference'),1);self.assertIn('tap_page_layout',s)
+    s=p.read_text();self.assertEqual(s.count('com.alensw.jni.TapPagePreference'),1);self.assertIn('tap_page_layout',s);self.assertLess(s.index('tap_page_layout'),s.index('single_tap_zoom'))
  def test_other_category_is_rejected_without_partial_mutation(self):
   with tempfile.TemporaryDirectory()as tmp:
    r=Path(tmp);a=self.fixture(r);before=a.read_text();self.fixture(r,'xml-v30','image_category')

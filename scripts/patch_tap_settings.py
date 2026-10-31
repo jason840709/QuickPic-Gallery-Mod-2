@@ -16,7 +16,7 @@ def patch(root):
   anchors=[n for n in group if n.get(A+'key')=='single_tap_zoom']
   if len(anchors)!=1:raise ValueError('Expected one tap zoom preference in Controls')
   node=ET.Element(CLASS,{A+'icon':'@drawable/ic_tap_zoom',A+'key':'tap_page_layout'})
-  group.insert(list(group).index(anchors[0])+1,node);staged.append((p,tree))
+  group.insert(list(group).index(anchors[0]),node);staged.append((p,tree))
  if not list((root/'res').glob('xml*/main_pref.xml')):raise ValueError('Missing settings XML variants')
  ET.register_namespace('android','http://schemas.android.com/apk/res/android')
  for p,tree in staged:
