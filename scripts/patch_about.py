@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.23",
+        "version_number": "11.0.24",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -304,6 +304,13 @@ def replacement_strings(path):
         latest = "11.0.23 更新\\n點擊翻頁的啟用與反轉選項移到頂部同一行。屏保設定補上與其他分區相同的分隔線。點擊翻頁移到操作分區第一項。設定開關增加清楚的底色與勾選標記。"
     else:
         latest = "Changes in 11.0.23\\nPlace tap navigation and reverse checkboxes together at the top. Match the screensaver section divider to the other settings sections. Place tap navigation first under Controls. Give settings switches distinct backgrounds and a small check mark when enabled."
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.24 更新\\n新增 E-ink 渲染优化，可选择面积取样或 Lanczos3，按显示倍率调整取样范围，原始显示为默认。适用静态图片，来源图片保留。"
+    elif chinese:
+        latest = "11.0.24 更新\\n新增 E-ink 渲染優化，可選面積取樣或 Lanczos3，按顯示倍率調整取樣範圍，原始顯示為預設。適用靜態圖片，來源圖片保留。"
+    else:
+        latest = "Changes in 11.0.24\\nAdd optional E-ink resampling with area coverage or scale-aware Lanczos3. Original remains the default. Applies to static images; source files are preserved."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

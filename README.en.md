@@ -8,6 +8,7 @@ QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It build
 
 ### E-readers and E-Ink screens
 
+- View → Image → E-ink rendering optimization offers area or scale-aware Lanczos3 resampling for reduced static images. Original is the default; reopen the image after changing this setting. Optional modes can increase loading and resampling time and limit zoom detail; see [E-ink sampling notes](EINK-RENDERING.md).
 - Choose None for image transitions. New installations also default to no slideshow transition, reducing visual changes between images.
 - Enable **Reader mode** in Settings → View → Image to keep the current page until the next complete image is ready, without a blurry preview or loading text. It reduces flicker but increases page-turn delay. Off by default.
 - Settings → View → Controls → Tap to turn pages offers six layouts with portrait 3:4 diagrams, including an L-shaped layout. Enable and Reverse checkboxes share the top row. Reverse swaps previous/next actions and updates every diagram. Tap navigation is off by default.
@@ -42,11 +43,11 @@ Open an image, then choose **Set as** from the three-dot menu. The screensaver a
 | Set as B1051C screensaver (設置為 B1051C 屏保) | Uses the corresponding original screensaver component on B1051C firmware 4.8.8 or 4.9.0. The current image becomes a separate 1860 × 2480 PNG before being handed to the system. |
 | Set as BOOX screensaver (設置為文石屏保) | Hands the current image to the original BOOX screensaver service. It requires a compatible BOOX system and original components; it is not available on ordinary Android phones. |
 
-Under **Settings → View → Image → Show screensaver options** (顯示屏保選項), select the actions to keep and tap Save. Each of the three actions can be shown or hidden, including hiding all three. Wallpaper remains available. Cancel keeps the saved settings.
+Under **Settings → View → Screensaver settings → Show screensaver options** (顯示屏保選項), select the actions to keep and tap Save. Each of the three actions can be shown or hidden, including hiding all three. Wallpaper remains available. Cancel keeps the saved settings.
 
 A clean first installation detects the device once to choose an initial screensaver action. Reopening or updating the app does not repeat detection or overwrite manual choices. Updates from older versions preserve existing choices; the new BOOX action is hidden until enabled manually.
 
-The general PNG action saves files in `QuickPic-Screensaver`. Under **Settings → View → Image → Screensaver image size** (設定屏保圖尺寸), enter a width and height or detect the current screen pixels, then save. QuickPic crops the largest centered area matching the target aspect ratio and resizes it to the exact output dimensions. The default is 1860 × 2480 pixels. Restore defaults (恢復預設) fills in that size; Save applies it.
+The general PNG action saves files in `QuickPic-Screensaver`. Under **Settings → View → Screensaver settings → Screensaver image size** (設定屏保圖尺寸), enter a width and height or detect the current screen pixels, then save. QuickPic crops the largest centered area matching the target aspect ratio and resizes it to the exact output dimensions. The default is 1860 × 2480 pixels. Restore defaults (恢復預設) fills in that size; Save applies it.
 
 Direct actions prepare a separate image copy and keep the original. You can cancel before confirming. B1051C firmware 4.8.8 and 4.9.0 use different original components, whose identity and version are checked before use. The BOOX action also requires a supported original service; compatibility does not extend automatically to every BOOX model or firmware. See [VALIDATION](VALIDATION.md) for tested scope.
 
