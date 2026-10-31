@@ -14,3 +14,6 @@
 首次測試的 Android 全螢幕教學會搶走焦點。探針只確認已辨識的英文「Got it」教學；不移除正式 App 的焦點保護。若仍有系統或權限視窗，先處理測試環境，不把未取得焦點的觸控當成功能失效。
 
 升級測試先用乾淨舊版證明 `tap_page_layout` 不存在，再更新新版。不能先由測試程式寫入新 key，然後將人工狀態當成真實舊版的預設。測試結果需附實際 APK 校驗值；模擬器結果不等於所有品牌實機驗收。
+
+
+11.0.22 adds `reverse` (all six layouts in both directions), `ui-check` (preview, Save/Cancel and persistence), and `settings` (open View and verify the two screensaver preferences). Run against synthetic images in a dedicated emulator. Android switches may expose their state as part of their accessible text.

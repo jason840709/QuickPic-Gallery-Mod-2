@@ -10,9 +10,15 @@ public final class TapPageLayout {
     public static final int LEFT_SIDE = 4;
     public static final int RIGHT_SIDE = 5;
     public static final int MIDDLE_SIDES = 6;
-    public static final int COUNT = 7;
+    public static final int L_SHAPE = 7;
+    public static final int COUNT = 8;
 
     private TapPageLayout() {}
+
+    public static int action(int mode, boolean reversed, float x, float y, int width, int height) {
+        int result = action(mode, x, y, width, height);
+        return reversed ? -result : result;
+    }
 
     public static int action(int mode, float x, float y, int width, int height) {
         if (mode <= OFF || mode >= COUNT || width < 3 || height < 2
@@ -29,6 +35,11 @@ public final class TapPageLayout {
         double horizontal = (double)x / width;
         double vertical = (double)y / height;
         switch (mode) {
+            case L_SHAPE:
+                int column = Math.min(2, (int)(horizontal * 3));
+                int row = Math.min(2, (int)(vertical * 3));
+                return column == 0 || (column == 1 && row == 0) ? -1
+                        : column == 2 || (column == 1 && row == 2) ? 1 : 0;
             case SIDES:
                 return horizontal < .30 ? -1 : horizontal > .70 ? 1 : 0;
             case TOP_BOTTOM:

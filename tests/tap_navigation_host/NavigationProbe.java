@@ -36,7 +36,7 @@ public final class NavigationProbe {
         for(float[] p:invalid)expect(!tap(view,host,p[0],p[1]),"invalid tap coordinate");
         expect(host.turns==0&&host.toggles==0&&host.hits==0,"invalid coordinates have no host effects");
         view.width=0;expect(!tap(view,host,1,1),"unlaid out view");view.width=900;
-        TapPagePreference.mode=7;expect(!tap(view,host,1,1),"unknown layout");
+        TapPagePreference.mode=8;expect(!tap(view,host,1,1),"unknown layout");
         TapPagePreference.mode=1;TapPagePreference.fail=true;expect(!tap(view,host,1,1),"preference failure keeps original action");TapPagePreference.fail=false;
         host=new Target();host.toggle=false;expect(!tap(view,host,450,600),"unavailable controls keep original action");
         host=new Target();TapPageLayout.result=1;

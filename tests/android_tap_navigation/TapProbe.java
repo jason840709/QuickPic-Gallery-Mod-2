@@ -7,9 +7,21 @@ public final class TapProbe extends Instrumentation {
  Object call(Object o,String name)throws Exception{return invoke(o,name,new Class<?>[0]);}
  @Override public void onStart(){Bundle result=new Bundle();try{
   target=getTargetContext();loader=target.getClassLoader();String mode=args.getString("mode","inspect");
+  if(mode.equals("settings")){
+   Intent settings=new Intent();settings.setClassName(target,"com.alensw.ui.activity.MainPreference");settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);activity=startActivitySync(settings);settle();
+   clickLabel("View");
+   android.preference.PreferenceActivity owner=(android.preference.PreferenceActivity)activity;
+   android.preference.PreferenceGroup category=(android.preference.PreferenceGroup)owner.findPreference("screensaver_category");
+   boolean okay=category!=null&&category.getPreferenceCount()==2&&"screensaver_size".equals(category.getPreference(0).getKey())&&"screensaver_options".equals(category.getPreference(1).getKey());
+   if(!okay)throw new Exception("Screensaver group lost settings: "+(category==null?"null":category.getPreferenceCount()+" "+category.getPreference(0).getKey()));
+   capture("settings-top");
+   for(int i=0;i<2;i++){sendKeyDownUpSync(KeyEvent.KEYCODE_PAGE_DOWN);settle();}
+   capture("settings-bottom");
+   result.putString("stream","Screensaver category has both existing preferences; activity and View screen opened\n");finish(0,result);return;
+  }
   if(mode.equals("state")||mode.equals("raw-state")){
    JSONObject j=new JSONObject();j.put("version",target.getPackageManager().getPackageInfo(target.getPackageName(),0).versionName);j.put("hasKey",PreferenceManager.getDefaultSharedPreferences(target).contains("tap_page_layout"));
-   if(mode.equals("state"))j.put("mode",loader.loadClass("com.alensw.jni.TapPagePreference").getMethod("mode",Context.class).invoke(null,target));result.putString("stream",j.toString()+"\n");finish(0,result);return;
+   if(mode.equals("state"))j.put("mode",loader.loadClass("com.alensw.jni.TapPagePreference").getMethod("mode",Context.class).invoke(null,target));j.put("reverse",loader.loadClass("com.alensw.jni.TapPagePreference").getMethod("reversed",Context.class).invoke(null,target));result.putString("stream",j.toString()+"\n");finish(0,result);return;
   }
   prepareFixtures();
   StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
@@ -17,8 +29,33 @@ public final class TapProbe extends Instrumentation {
   activity=startActivitySync(start);waitForIdleSync();SystemClock.sleep(1400);dismissTutorial();
   refresh();JSONObject info=state();info.put("phase","initial");checks.put(info);
   if(mode.equals("inspect")){result.putString("stream",checks.toString()+"\n");finish(0,result);return;}
-  int layout=Integer.parseInt(args.getString("layout","1"));if(!mode.equals("baseline"))setMode(layout);settle();
-  if(mode.equals("diagnostic")){
+  int layout=Integer.parseInt(args.getString("layout","1"));if(!mode.equals("baseline")&&!mode.equals("ui"))setMode(layout);settle();
+  if(mode.equals("ui-check")){
+   PreferenceManager.getDefaultSharedPreferences(target).edit().remove("tap_page_layout").remove("tap_page_reverse").commit();
+   showPreference();capture("normal");
+   check(prefMode()==0&&!prefReverse(),"fresh preference defaults disabled and unreversed");
+   clickLabel("Reverse");clickLabel("L-shaped, reversed");clickLabel("Enable tap navigation");capture("reversed");
+   check(prefMode()==0&&!prefReverse(),"pending UI changes do not save early");
+   clickLabel("CANCEL");check(prefMode()==0&&!prefReverse(),"cancel discards layout and reverse");
+   showPreference();clickLabel("Reverse");clickLabel("L-shaped, reversed");clickLabel("Enable tap navigation");clickLabel("SAVE");
+   check(prefMode()==7&&prefReverse(),"save commits L layout and reverse together");
+   showPreference();check(hasLabel("L-shaped, reversed"),"reopened preview retains reverse");capture("saved");clickLabel("CANCEL");
+   runOnMainSync(()->{android.content.res.Configuration config=new android.content.res.Configuration(activity.getResources().getConfiguration());config.setLocale(java.util.Locale.TAIWAN);activity.getResources().updateConfiguration(config,activity.getResources().getDisplayMetrics());});
+   showPreference();capture("traditional");clickLabel("取消");
+  }else if(mode.equals("ui")){
+   if("true".equals(args.getString("reset")))PreferenceManager.getDefaultSharedPreferences(target).edit().remove("tap_page_layout").remove("tap_page_reverse").commit();
+   runOnMainSync(()->{try{Class<?> cl=loader.loadClass("com.alensw.jni.TapPagePreference");Object pref=cl.getConstructor(Context.class,android.util.AttributeSet.class).newInstance(activity,null);Method show=cl.getDeclaredMethod("onClick");show.setAccessible(true);show.invoke(pref);}catch(Exception e){throw new RuntimeException(e);}});
+   SystemClock.sleep(120000);
+  }else if(mode.equals("reverse")){
+   float[][] coordinates={{1,.12f,.82f},{2,.15f,.5f},{4,.15f,.25f},{5,.85f,.25f},{6,.15f,.5f},{7,.5f,.15f}};
+   for(boolean reversed:new boolean[]{false,true}){
+    PreferenceManager.getDefaultSharedPreferences(target).edit().putBoolean("tap_page_reverse",reversed).commit();
+    for(float[] coord:coordinates){setMode((int)coord[0]);hideBars();int before=index();tap(coord[1],coord[2]);settle();check(index()==(before+(reversed?1:count()-1))%count(),"layout "+coord[0]+" reverse="+reversed);}
+    setMode(7);hideBars();int before=index();tap(.5f,.5f);settle();check(index()==before,"L center remains menu reverse="+reversed);
+   }
+   hideBars();int before=index();swipe(.83f,.82f,.17f,.82f,320);settle();check(index()==(before+1)%count(),"reverse does not reverse swipe");
+   PreferenceManager.getDefaultSharedPreferences(target).edit().putBoolean("tap_page_reverse",false).commit();
+  }else if(mode.equals("diagnostic")){
    hideBars();checks.put(state().put("phase","before confirmed call"));int before=index();final boolean[] used={false};runOnMainSync(()->{try{used[0]=(Boolean)loader.loadClass("com.alensw.jni.TapPageNavigation").getMethod("onConfirmedTap",View.class,loader.loadClass("com.alensw.jni.TapPageNavigation$Host"),float.class,float.class).invoke(null,picture,picture,picture.getWidth()*.88f,picture.getHeight()*.82f);}catch(Exception e){throw new RuntimeException(e);}});settle();check(index()==(before+1)%count(),"direct actual helper turns page; consumed="+used[0]);
    hideBars();before=index();tap(.88f,.82f);settle();check(index()==(before+1)%count(),"real confirmed tap after exact owner hide");
   }else if(mode.equals("baseline")){
@@ -39,7 +76,7 @@ public final class TapProbe extends Instrumentation {
    // Opened chrome must receive these taps through Activity dispatch, not a test-only direct view call.
    checks.put(state().put("phase","after center menu"));
   }else if(mode.equals("menus")){
-   setMode(3);showBars();beforeMenuIndex=index();View more=findDesc(activity.getWindow().getDecorView(),"More options");if(more==null)throw new Exception("Missing overflow button");tapView(more);settle();check(index()==beforeMenuIndex,"overflow button in top hot zone opens without turning page");
+   setMode(7);showBars();beforeMenuIndex=index();View more=findDesc(activity.getWindow().getDecorView(),"More options");if(more==null)throw new Exception("Missing overflow button");tapView(more);settle();check(index()==beforeMenuIndex,"overflow button in top hot zone opens without turning page");
    android.view.accessibility.AccessibilityNodeInfo menu=getUiAutomation().getRootInActiveWindow();java.util.List<android.view.accessibility.AccessibilityNodeInfo> entries=menu.findAccessibilityNodeInfosByText("Set as");if(entries.isEmpty())throw new Exception("Overflow did not show Set as");android.graphics.Rect b=new android.graphics.Rect();entries.get(0).getBoundsInScreen(b);tapScreen(b.exactCenterX(),b.exactCenterY());settle();check(index()==beforeMenuIndex,"overflow menu item click opens Set as without turning page");
    android.view.accessibility.AccessibilityNodeInfo dialog=getUiAutomation().getRootInActiveWindow();check(dialog!=null&&!dialog.findAccessibilityNodeInfosByText("Set as").isEmpty(),"native Set as dialog visible with tap navigation enabled");sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);settle();check(index()==beforeMenuIndex,"closing dialog keeps the page");
   }else if(mode.equals("hold")){
@@ -47,6 +84,18 @@ public final class TapProbe extends Instrumentation {
   }
   JSONObject summary=new JSONObject();summary.put("checks",checks);summary.put("failures",failures);result.putString("stream",summary.toString()+"\n");result.putString("status",failures==0?"PASS":"FAIL");finish(failures==0?0:1,result);
  }catch(Throwable error){StringWriter w=new StringWriter();error.printStackTrace(new PrintWriter(w));result.putString("stream",w.toString());result.putString("status","FAIL");finish(1,result);}}
+ int prefMode()throws Exception{return(Integer)loader.loadClass("com.alensw.jni.TapPagePreference").getMethod("mode",Context.class).invoke(null,target);}
+ boolean prefReverse()throws Exception{return(Boolean)loader.loadClass("com.alensw.jni.TapPagePreference").getMethod("reversed",Context.class).invoke(null,target);}
+ void showPreference(){runOnMainSync(()->{try{Class<?> cl=loader.loadClass("com.alensw.jni.TapPagePreference");Object pref=cl.getConstructor(Context.class,android.util.AttributeSet.class).newInstance(activity,null);Method show=cl.getDeclaredMethod("onClick");show.setAccessible(true);show.invoke(pref);}catch(Exception e){throw new RuntimeException(e);}});settle();}
+ android.view.accessibility.AccessibilityNodeInfo findLabel(android.view.accessibility.AccessibilityNodeInfo n,String label){
+  if(n==null)return null;if(matches(n.getText(),label)||matches(n.getContentDescription(),label))return n;
+  for(int i=0;i<n.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo found=findLabel(n.getChild(i),label);if(found!=null)return found;}return null;
+ }
+ boolean matches(CharSequence actual,String expected){String s=actual==null?"":actual.toString().trim();return s.equalsIgnoreCase(expected)||s.startsWith(expected+" ")||s.startsWith(expected+"\n");}
+ boolean hasLabel(String label){return findLabel(getUiAutomation().getRootInActiveWindow(),label)!=null;}
+ void clickLabel(String label)throws Exception{android.view.accessibility.AccessibilityNodeInfo n=findLabel(getUiAutomation().getRootInActiveWindow(),label);if(n==null){SystemClock.sleep(1200);n=findLabel(getUiAutomation().getRootInActiveWindow(),label);}if(n==null)throw new Exception("Missing UI "+label+" tree="+uiTree(getUiAutomation().getRootInActiveWindow()));Rect b=new Rect();n.getBoundsInScreen(b);tapScreen(b.exactCenterX(),b.exactCenterY());settle();}
+ String uiTree(android.view.accessibility.AccessibilityNodeInfo n){if(n==null)return "null";String s="["+n.getText()+"|"+n.getContentDescription()+"]";for(int i=0;i<n.getChildCount();i++)s+=uiTree(n.getChild(i));return s;}
+ void capture(String name)throws Exception{Bitmap bitmap=getUiAutomation().takeScreenshot();if(bitmap==null)throw new Exception("No screenshot");try(FileOutputStream out=new FileOutputStream(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"quickpic22-"+name+".png"))){bitmap.compress(Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();}
  void dismissTutorial(){for(int i=0;i<12;i++){android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();if(root!=null){for(android.view.accessibility.AccessibilityNodeInfo n:root.findAccessibilityNodeInfosByText("Got it")){n.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);SystemClock.sleep(200);return;}}SystemClock.sleep(100);}}
  void prepareFixtures()throws Exception{
   File d=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"QuickPicTapTest");d.mkdirs();

@@ -49,7 +49,7 @@ public final class TapPageNavigation {
         } catch (RuntimeException unavailable) {
             return false;
         }
-        if (mode < 1 || mode > 6) return false;
+        if (mode < 1 || mode >= TapPageLayout.COUNT) return false;
         int width = picture.getWidth(), height = picture.getHeight();
         if (width <= 0 || height <= 0 || Float.isNaN(x) || Float.isNaN(y)
                 || Float.isInfinite(x) || Float.isInfinite(y)
@@ -57,7 +57,7 @@ public final class TapPageNavigation {
         // Popup windows lose focus; native top/bottom controls use their original hit test.
         // The view's ordinary event dispatch remains responsible for clicking menu items.
         if (host.quickpicTapControlsHit(x, y)) return false;
-        int action = TapPageLayout.action(mode, x, y, width, height);
+        int action = TapPageLayout.action(mode, TapPagePreference.reversed(picture.getContext()), x, y, width, height);
         if (action == -1 || action == 1) {
             host.quickpicTapTurn(action);
             return true;

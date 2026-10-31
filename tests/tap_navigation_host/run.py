@@ -17,9 +17,9 @@ private final int action,count;public MotionEvent(int a,int c){action=a;count=c;
 public class View { public boolean shown=true,focus=true;public int width=900,height=1200;public Context context=new Context();
 public boolean isShown(){return shown;}public boolean hasWindowFocus(){return focus;}public int getWidth(){return width;}public int getHeight(){return height;}public Context getContext(){return context;} }''',
     'com/alensw/jni/TapPagePreference.java': '''package com.alensw.jni; import android.content.Context;
-public class TapPagePreference { public static int mode,reads;public static boolean fail;public static int mode(Context c){reads++;if(fail)throw new IllegalStateException();return mode;} }''',
+public class TapPagePreference { public static int mode,reads;public static boolean fail;public static boolean reversed(Context c){return false;}public static int mode(Context c){reads++;if(fail)throw new IllegalStateException();return mode;} }''',
     'com/alensw/jni/TapPageLayout.java': '''package com.alensw.jni;
-public class TapPageLayout { public static int result,calls;public static int action(int mode,float x,float y,int w,int h){calls++;return result;} }'''
+public class TapPageLayout { public static final int COUNT=8;public static int result,calls;public static int action(int mode,boolean reversed,float x,float y,int w,int h){calls++;return result;} }'''
 }
 
 def main():

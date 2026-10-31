@@ -10,7 +10,8 @@ QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It build
 
 - Choose None for image transitions. New installations also default to no slideshow transition, reducing visual changes between images.
 - Enable **Reader mode** in Settings → View → Image to keep the current page until the next complete image is ready, without a blurry preview or loading text. It reduces flicker but increases page-turn delay. Off by default.
-- Choose a tap layout under Settings → View → Controls → Tap to turn pages, with a preview of previous, menu and next areas. Tap navigation is disabled by default for new installs and upgrades. Swipe, double-tap and zoom keep their existing behavior.
+- Settings → View → Controls → Tap to turn pages offers six layouts with portrait 3:4 diagrams, including an L-shaped layout. Reverse swaps previous/next actions and updates every diagram. Tap navigation is off by default.
+- Screensaver size and menu visibility are grouped under Settings → View → Screensaver settings.
 - Edit included and excluded folder paths directly to choose where the gallery looks for images.
 - Hidden items are shown by default when the app opens; existing password protection still applies.
 

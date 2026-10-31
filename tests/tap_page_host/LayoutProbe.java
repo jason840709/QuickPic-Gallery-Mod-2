@@ -4,7 +4,7 @@ public final class LayoutProbe {
  private static void equal(int actual,int expected,String message){checks++;if(actual!=expected)throw new AssertionError(message+": "+actual+" != "+expected);}
  private static void at(int mode,float x,float y,int expected,String text){equal(TapPageLayout.action(mode,x,y,1000,1000),expected,text);}
  public static void main(String[]args){
-  for(int m=0;m<7;m++)equal(TapPageLayout.action(m,500,500,1000,1000),0,"center stays available "+m);
+  for(int m=0;m<8;m++)equal(TapPageLayout.action(m,500,500,1000,1000),0,"center stays available "+m);
   at(0,10,900,0,"disabled previous area");at(0,990,900,0,"disabled next area");
   at(1,100,499.9f,0,"bottom begins at half");at(1,100,500,-1,"bottom upper edge included");at(1,333,800,0,"left integer seam is menu");at(1,332.9f,800,-1,"left integer interior");at(1,666,800,0,"right integer seam is menu");at(1,666.1f,800,1,"right integer interior");
   equal(TapPageLayout.action(1,332.9f,800,1001,1601),-1,"odd width left");equal(TapPageLayout.action(1,333,800,1001,1601),0,"odd width seam");equal(TapPageLayout.action(1,667,800,1001,1601),0,"odd width right seam");equal(TapPageLayout.action(1,667.1f,800,1001,1601),1,"odd width right interior");equal(TapPageLayout.action(1,10,799.9f,1001,1601),0,"odd height seam");
@@ -14,13 +14,20 @@ public final class LayoutProbe {
   at(5,900,499.9f,-1,"right upper");at(5,900,500,1,"right lower");at(5,700,50,0,"right width seam");at(5,100,800,0,"opposite left menu");
   at(6,100,349.9f,0,"middle above");at(6,100,350,-1,"middle upper included");at(6,900,650,1,"middle lower included");at(6,900,650.1f,0,"middle below");at(6,300,500,0,"middle left seam");at(6,700,500,0,"middle right seam");
   float[] invalid={Float.NaN,Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY,-1,1000};
-  for(int m=0;m<7;m++)for(float v:invalid){at(m,v,900,0,"invalid x");at(m,100,v,0,"invalid y");}
+  for(int m=0;m<8;m++)for(float v:invalid){at(m,v,900,0,"invalid x");at(m,100,v,0,"invalid y");}
   for(int m=-2;m<10;m++){equal(TapPageLayout.action(m,1,1,0,10),0,"no width");equal(TapPageLayout.action(m,1,1,10,0),0,"no height");equal(TapPageLayout.action(m,0,0,2,10),0,"tiny width");equal(TapPageLayout.action(m,0,0,10,1),0,"tiny height");}
-  for(int m:new int[]{-2,-1,7,8,Integer.MAX_VALUE})at(m,100,900,0,"invalid mode");
+  for(int m:new int[]{-2,-1,8,9,Integer.MAX_VALUE})at(m,100,900,0,"invalid mode");
   for(int[]size:new int[][]{{1080,1920},{1920,1080},{1860,2480},{2480,1860}}){
    equal(TapPageLayout.action(1,size[0]*.1f,size[1]*.8f,size[0],size[1]),-1,"legacy orientation");equal(TapPageLayout.action(1,size[0]*.9f,size[1]*.8f,size[0],size[1]),1,"legacy next orientation");equal(TapPageLayout.action(2,size[0]*.1f,size[1]*.1f,size[0],size[1]),-1,"side orientation");equal(TapPageLayout.action(3,size[0]*.9f,size[1]*.9f,size[0],size[1]),1,"top bottom orientation");
-   for(int m=1;m<7;m++){boolean prev=false,menu=false,next=false;for(int y=1;y<20;y++)for(int x=1;x<20;x++){int a=TapPageLayout.action(m,size[0]*x/20f,size[1]*y/20f,size[0],size[1]);equal(a>=-1&&a<=1?0:1,0,"valid action range");prev|=a<0;menu|=a==0;next|=a>0;}equal(prev&&menu&&next?0:1,0,"all three areas reachable mode"+m);}
+   for(int m=1;m<8;m++){boolean prev=false,menu=false,next=false;for(int y=1;y<20;y++)for(int x=1;x<20;x++){int a=TapPageLayout.action(m,size[0]*x/20f,size[1]*y/20f,size[0],size[1]);equal(a>=-1&&a<=1?0:1,0,"valid action range");prev|=a<0;menu|=a==0;next|=a>0;}equal(prev&&menu&&next?0:1,0,"all three areas reachable mode"+m);}
   }
+  int[][] cells={{-1,-1,1},{-1,0,1},{-1,1,1}};
+  for(int row=0;row<3;row++)for(int col=0;col<3;col++){
+   equal(TapPageLayout.action(7,false,(col+.5f)*620,(row+.5f)*2480/3,1860,2480),cells[row][col],"L cell");
+   equal(TapPageLayout.action(7,true,(col+.5f)*620,(row+.5f)*2480/3,1860,2480),-cells[row][col],"reversed L cell");
+  }
+  for(int mode:new int[]{0,1,2,4,5,6,7})for(int y=1;y<30;y++)for(int x=1;x<30;x++)
+   equal(TapPageLayout.action(mode,true,x*62,y*82,1860,2480),-TapPageLayout.action(mode,false,x*62,y*82,1860,2480),"reverse exchanges only directions");
   System.out.println("PASS "+checks+" production layout assertions");
  }
 }
