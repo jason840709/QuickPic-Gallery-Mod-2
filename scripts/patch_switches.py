@@ -60,7 +60,7 @@ def patch(root):
         <item name="android:textOn">@string/quickpic_switch_on</item>
         <item name="android:textOff">@string/quickpic_switch_off</item>
         <item name="android:switchTextAppearance">@style/QuickPicSwitchText</item>
-        <item name="android:switchMinWidth">64dp</item>
+        <item name="android:switchMinWidth">36dp</item>
         <item name="android:thumbTextPadding">4dp</item>
     </style>
     <style name="QuickPicSwitchText" parent="@android:style/TextAppearance.Material">
@@ -82,12 +82,12 @@ def patch(root):
     <item android:color="#ff171717" />
 </selector>''')
     for name, size, corners, states in (
-        ('track', (64, 24), 12, [
+        ('track', (36, 12), 6, [
             ('android:state_enabled="false" android:state_checked="true"', '#ff8fa9c8', '#ff777777'),
             ('android:state_enabled="false"', '#ffdddddd', '#ff999999'),
             ('android:state_checked="true"', '#ff1967d2', '#ff0c3b80'),
             ('', '#ffd2d6dc', '#ff62676e')]),
-        ('thumb', (32, 32), 16, [
+        ('thumb', (20, 20), 10, [
             ('android:state_enabled="false" android:state_checked="true"', '#ffeeeeee', '#ff999999'),
             ('android:state_enabled="false"', '#ffeeeeee', '#ff999999'),
             ('android:state_checked="true"', '#ffffffff', '#ff405e7b'),
@@ -116,7 +116,7 @@ def patch(root):
     for suffix, color in (('', '#ff455a70'), ('_disabled', '#ff8e969f')):
         write(res / ('drawable/quickpic_switch_tick' + suffix + '.xml'),
               '<vector xmlns:android="http://schemas.android.com/apk/res/android" '
-              'android:width="32dp" android:height="32dp" android:viewportWidth="32" android:viewportHeight="32">'
+              'android:width="20dp" android:height="20dp" android:viewportWidth="32" android:viewportHeight="32">'
               '<path android:pathData="M10,16 L14,20 L23,11" android:fillColor="#00000000" '
               'android:strokeColor="' + color + '" android:strokeWidth="1.5" '
               'android:strokeLineCap="round" android:strokeLineJoin="round" /></vector>')
