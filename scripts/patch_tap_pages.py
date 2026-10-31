@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Move legacy ACTION_UP paging into PictureView's confirmed single-tap callback."""
+"""Use detector-validated release for page zones, preserving native gesture cleanup."""
 from pathlib import Path
 import hashlib
 import re
@@ -133,6 +133,42 @@ def hook_callback(body):
     return body.replace(anchor, '    .locals 1\n\n' + CALLBACK_HOOK, 1)
 
 
+
+RELEASE_HOOK = """    # quickpic-validated-release-pages
+    iget v1, p0, Lcom/alensw/ui/view/w;->a:I
+    if-ne v1, v6, :quickpic_release_original
+    iget-boolean v1, p0, Lcom/alensw/ui/view/w;->b:Z
+    if-nez v1, :quickpic_release_original
+    iget-object v1, p0, Lcom/alensw/ui/view/w;->z:Lcom/alensw/ui/view/y;
+    instance-of v2, v1, Lcom/alensw/ui/view/bb;
+    if-eqz v2, :quickpic_release_original
+    check-cast v1, Lcom/alensw/ui/view/bb;
+    iget-object v1, v1, Lcom/alensw/ui/view/bb;->a:Lcom/alensw/ui/view/PictureView;
+    invoke-static {v1, v1, p1}, Lcom/alensw/jni/TapPageNavigation;->onTapRelease(Landroid/view/View;Lcom/alensw/jni/TapPageNavigation$Host;Landroid/view/MotionEvent;)Z
+    move-result v1
+    if-eqz v1, :quickpic_release_original
+    iget-object v1, p0, Lcom/alensw/ui/view/w;->y:Landroid/os/Handler;
+    iget-object v2, p0, Lcom/alensw/ui/view/w;->F:Ljava/lang/Runnable;
+    invoke-virtual {v1, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+    iput-boolean v5, p0, Lcom/alensw/ui/view/w;->E:Z
+    iput v5, p0, Lcom/alensw/ui/view/w;->a:I
+    :quickpic_release_original
+
+"""
+RELEASE_ANCHOR = ("    iput-boolean v5, p0, Lcom/alensw/ui/view/w;->c:Z\n\n"
+                  "    iget v1, p0, Lcom/alensw/ui/view/w;->a:I")
+
+
+def hook_release(body):
+    if '# quickpic-validated-release-pages' in body:
+        if body.count(RELEASE_HOOK) != 1:
+            raise ValueError('Damaged validated-release hook')
+        return body
+    if body.count(RELEASE_ANCHOR) != 1 or '    const/4 v6, 0x1' not in body or '    const/4 v5, 0x0' not in body:
+        raise ValueError('Unexpected detector UP state branch')
+    return body.replace(RELEASE_ANCHOR, RELEASE_HOOK + RELEASE_ANCHOR, 1)
+
+
 def patch(decoded_root):
     root = Path(decoded_root)
     picture = root / 'smali/com/alensw/ui/view/PictureView.smali'
@@ -154,7 +190,10 @@ def patch(decoded_root):
     if '.field final synthetic a:' + PICTURE not in c:
         raise ValueError('Expected a PictureView-only callback')
     c = change_method(c, CALLBACK_SIGNATURE, hook_callback)
-    # Both files validate before writing; unrelated gesture callbacks remain untouched.
+    detector = root / 'smali/com/alensw/ui/view/w.smali'
+    w = change_method(detector.read_text(), '.method public a(Landroid/view/MotionEvent;)Z', hook_release)
+    # All three files validate before writing; unrelated gesture callbacks remain untouched.
     picture.write_text(p)
     callback.write_text(c)
-    return ['smali/com/alensw/ui/view/PictureView.smali', 'smali/com/alensw/ui/view/bb.smali']
+    detector.write_text(w)
+    return ['smali/com/alensw/ui/view/PictureView.smali', 'smali/com/alensw/ui/view/bb.smali', 'smali/com/alensw/ui/view/w.smali']

@@ -12,7 +12,8 @@ STUBS = {
     'android/content/Context.java': 'package android.content; public class Context {}',
     'android/view/MotionEvent.java': '''package android.view;
 public class MotionEvent {public static final int ACTION_DOWN=0,ACTION_UP=1,ACTION_MOVE=2,ACTION_CANCEL=3,ACTION_POINTER_DOWN=5,ACTION_POINTER_UP=6;
-private final int action,count;public MotionEvent(int a,int c){action=a;count=c;}public int getActionMasked(){return action;}public int getPointerCount(){return count;}}''',
+private final int action,count;public MotionEvent(int a,int c){action=a;count=c;}public int getActionMasked(){return action;}public int getPointerCount(){return count;}public float getX(){return x;}public float getY(){return y;}public long getDownTime(){return 0;}public long getEventTime(){return duration;}public float x=890,y=900;public long duration=60;}''',
+    'android/view/ViewConfiguration.java':'package android.view;public class ViewConfiguration {public static int getLongPressTimeout(){return 500;}}',
     'android/view/View.java': '''package android.view; import android.content.Context;
 public class View { public boolean shown=true,focus=true;public int width=900,height=1200;public Context context=new Context();
 public boolean isShown(){return shown;}public boolean hasWindowFocus(){return focus;}public int getWidth(){return width;}public int getHeight(){return height;}public Context getContext(){return context;} }''',

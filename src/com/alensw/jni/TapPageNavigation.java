@@ -3,12 +3,13 @@ package com.alensw.jni;
 
 import android.view.View;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import java.util.WeakHashMap;
 
-/** Routes only the existing detector's confirmed single-tap callback. */
+/** Pages on a detector-validated release; non-page taps keep original confirmation. */
 public final class TapPageNavigation {
-    // Values never retain their View keys. UP intentionally leaves this bit intact
-    // until the existing detector's delayed callback, or the next DOWN, consumes it.
+    // Values never retain their View keys. Keep rejection through any delayed
+    // confirmation; the next DOWN starts a fresh gesture.
     private static final WeakHashMap<View, Boolean> BLOCKED = new WeakHashMap<View, Boolean>();
     /** Direct DEX bridges: no controller fields or methods are guessed by reflection. */
     public interface Host {
@@ -38,8 +39,25 @@ public final class TapPageNavigation {
         synchronized (BLOCKED) { return Boolean.TRUE.equals(BLOCKED.get(picture)); }
     }
 
-    /** False leaves the original single-tap behavior completely in control. */
+    /** Called only by the existing detector's single-pointer, stationary UP branch. */
+    public static boolean onTapRelease(View picture, Host host, MotionEvent event) {
+        if (event == null || event.getActionMasked() != MotionEvent.ACTION_UP
+                || event.getPointerCount() != 1) return false;
+        if (event.getEventTime() - event.getDownTime() >= ViewConfiguration.getLongPressTimeout()) {
+            // A queued UP can be handled before the detector's delayed callback.
+            // Keep that callback from reviving the same rejected long press.
+            if (picture != null) synchronized (BLOCKED) { BLOCKED.put(picture, true); }
+            return false;
+        }
+        return route(picture, host, event.getX(), event.getY(), false);
+    }
+
+    /** Other areas retain confirmation and the original double-tap behavior. */
     public static boolean onConfirmedTap(View picture, Host host, float x, float y) {
+        return route(picture, host, x, y, true);
+    }
+
+    private static boolean route(View picture, Host host, float x, float y, boolean includeMenu) {
         if (picture == null || host == null || !picture.isShown()
                 || !picture.hasWindowFocus() || blocked(picture)
                 || !host.quickpicTapReady()) return false;
@@ -64,6 +82,6 @@ public final class TapPageNavigation {
         }
         // Enabled layouts always reserve the remaining content for the controls.
         // Disabled mode above keeps the original single/double-tap zoom preferences.
-        return host.quickpicTapToggleControls();
+        return includeMenu && host.quickpicTapToggleControls();
     }
 }

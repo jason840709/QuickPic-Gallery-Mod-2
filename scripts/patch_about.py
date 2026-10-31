@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.24",
+        "version_number": "11.0.25",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -311,6 +311,14 @@ def replacement_strings(path):
         latest = "11.0.24 更新\\n新增 E-ink 渲染優化，可選面積取樣或 Lanczos3，按顯示倍率調整取樣範圍，原始顯示為預設。適用靜態圖片，來源圖片保留。"
     else:
         latest = "Changes in 11.0.24\\nAdd optional E-ink resampling with area coverage or scale-aware Lanczos3. Original remains the default. Applies to static images; source files are preserved."
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.25 更新\\n启用点按翻页后，翻页区域在手指放开时立即响应，快速连点可连续翻页。保留滑动、双指缩放及菜单操作。"
+    elif chinese:
+        latest = "11.0.25 更新\\n啟用點擊翻頁後，翻頁區域在手指放開時立即回應，快速連點可連續翻頁。保留滑動、雙指縮放及選單操作。"
+    else:
+        latest = "Changes in 11.0.25\\nEnabled page zones respond on release; repeated taps turn successive pages. Keep swipe, pinch zoom and menu controls."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

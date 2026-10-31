@@ -58,6 +58,17 @@ public final class NavigationProbe {
         expect(!tap(view,host,890,900),"any multi-pointer event blocks gesture");
         View other=new View();Target otherHost=new Target();
         expect(tap(other,otherHost,890,900)&&otherHost.turns==1,"state is per view");
+        host=new Target();TapPageNavigation.track(view,new MotionEvent(MotionEvent.ACTION_DOWN,1));
+        MotionEvent release=new MotionEvent(MotionEvent.ACTION_UP,1);TapPageLayout.result=1;
+        expect(TapPageNavigation.onTapRelease(view,host,release)&&host.turns==1,"validated release pages immediately");
+        host=new Target();TapPageLayout.result=0;
+        expect(!TapPageNavigation.onTapRelease(view,host,release)&&host.toggles==0,"release in menu area keeps original confirmation");
+        TapPageLayout.result=1;release.duration=600;
+        expect(!TapPageNavigation.onTapRelease(view,host,release)&&host.turns==0,"long press does not page");expect(!tap(view,host,890,900)&&host.turns==0,"delayed confirmation cannot revive a rejected long press");release.duration=60;
+        expect(!TapPageNavigation.onTapRelease(view,host,new MotionEvent(MotionEvent.ACTION_DOWN,1)),"down cannot page");
+        expect(!TapPageNavigation.onTapRelease(view,host,new MotionEvent(MotionEvent.ACTION_UP,2)),"multi-pointer release cannot page");
+        TapPageNavigation.track(view,new MotionEvent(MotionEvent.ACTION_CANCEL,1));
+        expect(!TapPageNavigation.onTapRelease(view,host,release)&&host.turns==0,"cancelled release cannot page");
         System.out.println("PASS "+checks+" production tap routing checks; no Android gesture simulation");
     }
 }

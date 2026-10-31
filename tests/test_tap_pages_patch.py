@@ -29,6 +29,8 @@ class TapPatchTests(unittest.TestCase):
     return-void
 .end method
 ''')
+        detector = root / 'smali/com/alensw/ui/view/w.smali'
+        detector.write_text('.class public Lcom/alensw/ui/view/w;\n.super Ljava/lang/Object;\n.method public a(Landroid/view/MotionEvent;)Z\n    .locals 9\n    const/4 v6, 0x1\n    const/4 v5, 0x0\n' + patch.RELEASE_ANCHOR + '\n    return v5\n.end method\n')
         return picture, callback
 
     def test_restored_stream_has_no_release_interception(self):
@@ -39,6 +41,25 @@ class TapPatchTests(unittest.TestCase):
             self.assertNotIn('getAction()', picture.read_text())
             self.assertIn('onConfirmedTap', callback.read_text())
             self.assertIn('.method public c(FF)V\n    .locals 0\n    return-void', callback.read_text())
+
+    def test_detector_release_keeps_cleanup_and_cancels_only_consumed_confirmation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); self.fixture(root); patch.patch(root)
+            body = (root / 'smali/com/alensw/ui/view/w.smali').read_text()
+            self.assertIn(patch.RELEASE_HOOK + patch.RELEASE_ANCHOR, body)
+            self.assertIn('if-ne v1, v6', body)
+            self.assertIn('->removeCallbacks(Ljava/lang/Runnable;)V', body)
+            self.assertNotIn('return', patch.RELEASE_HOOK)
+
+    def test_wrong_detector_branch_rejects_before_any_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); picture, callback = self.fixture(root)
+            detector = root / 'smali/com/alensw/ui/view/w.smali'
+            detector.write_text(detector.read_text().replace('->c:Z', '->unknown:Z'))
+            before = [p.read_bytes() for p in (picture, callback, detector)]
+            with self.assertRaisesRegex(ValueError, 'Unexpected detector'):
+                patch.patch(root)
+            self.assertEqual(before, [p.read_bytes() for p in (picture, callback, detector)])
 
     def test_reentry_has_no_duplicate_hook_or_bridges(self):
         with tempfile.TemporaryDirectory() as tmp:
