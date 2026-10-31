@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.20",
+        "version_number": "11.0.21",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -280,6 +280,14 @@ def replacement_strings(path):
         latest = "11.0.20 更新\n新增文石屏保入口；首次安裝依機型選擇預設屏保選項，可在設定中自行開關。一般屏保入口直接選擇其他 App 開啟 PNG。支援 B1051C 4.8.8 與 4.9.0 的原廠屏保介面。"
     else:
         latest = "Changes in 11.0.20\nAdd the BOOX screensaver action, choose defaults on first installation only, and keep manual visibility settings. The generic action opens an app chooser. Support B1051C 4.8.8 and 4.9.0 screensaver interfaces."
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.21 更新\\n新增点按翻页布局设置，首次安装与旧版升级均默认停用。可选择不同区域并预览；滑动、缩放和菜单操作各自保留。"
+    elif chinese:
+        latest = "11.0.21 更新\\n新增點擊翻頁配置，首次安裝與舊版升級均預設停用。可選擇不同區域並預覽；滑動、縮放與選單操作各自保留。"
+    else:
+        latest = "Changes in 11.0.21\\nAdd configurable tap-to-turn layouts with previews, disabled by default for new installs and upgrades. Keep swipe, zoom and menu controls separate."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
