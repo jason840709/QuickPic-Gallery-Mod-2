@@ -29,6 +29,8 @@ Scanning explores new or recently changed folders before revisiting known paths,
 
 ### Deleting images and folders
 
+Local folders in search results support long-press selection, multi-select and select all. When folders are selected, the action menu keeps deletion and select all; image sharing and editing actions are hidden.
+
 Deleting a folder removes the whole directory, including non-image files, hidden files and subfolders. Access to the selected SD-card location must be granted first. Failed or cancelled items remain in the list; after a successful parent deletion, its child albums are removed too.
 
 Individual and selected-image deletion use the available storage permissions and media records to reduce redundant cleanup. Per-image progress remains; no diagnostic report appears after deletion.

@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25", "11.0.26")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.25",
+        "version_number": "11.0.26",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -319,6 +319,14 @@ def replacement_strings(path):
         latest = "11.0.25 更新\\n啟用點擊翻頁後，翻頁區域在手指放開時立即回應，快速連點可連續翻頁。保留滑動、雙指縮放及選單操作。"
     else:
         latest = "Changes in 11.0.25\\nEnabled page zones respond on release; repeated taps turn successive pages. Keep swipe, pinch zoom and menu controls."
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = "11.0.26 更新\\n搜索结果中的本地文件夹可长按勾选、多选与全选删除。删除包含图片、其他文件、隐藏项目和子文件夹；确认目录消失后才移除结果。"
+    elif chinese:
+        latest = "11.0.26 更新\\n搜尋結果中的本機資料夾可長按勾選、多選與全選刪除。刪除包含圖片、其他檔案、隱藏項目和子資料夾；確認目錄消失後才移除結果。"
+    else:
+        latest = "Changes in 11.0.26\\nSelect local folders in search results by long press, including multi-select and select all. Delete the whole folder with non-image files, hidden entries and subfolders; confirm its removal before clearing results."
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
