@@ -77,6 +77,7 @@ class ScreensaverPatchTests(unittest.TestCase):
     return v0
 .end method
 ''')
+        (root/'AndroidManifest.xml').write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.synthetic"><application /></manifest>')
         return path
 
     def test_all_api_preferences_and_entry_idempotent(self):

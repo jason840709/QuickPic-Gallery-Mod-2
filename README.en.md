@@ -8,6 +8,7 @@ QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It build
 
 ### E-readers and E-Ink screens
 
+- Enable **Settings → View → Behavior → Show page numbers** to display a small current/total count at the bottom center, such as 07/50. It is off by default.
 - View → Image → E-ink rendering optimization offers area or scale-aware Lanczos3 resampling for reduced static images. Original is the default; reopen the image after changing this setting. Optional modes can increase loading and resampling time and limit zoom detail; see [E-ink sampling notes](EINK-RENDERING.md).
 - Choose None for image transitions. New installations also default to no slideshow transition, reducing visual changes between images.
 - Enable **Reader mode** in Settings → View → Image to keep the current page until the next complete image is ready, without a blurry preview or loading text. It reduces flicker but increases page-turn delay. Off by default.

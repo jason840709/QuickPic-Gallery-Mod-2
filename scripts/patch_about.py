@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25", "11.0.26")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25", "11.0.26", "11.0.27", "11.0.28")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.26",
+        "version_number": "11.0.28",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -327,6 +327,22 @@ def replacement_strings(path):
         latest = "11.0.26 更新\\n搜尋結果中的本機資料夾可長按勾選、多選與全選刪除。刪除包含圖片、其他檔案、隱藏項目和子資料夾；確認目錄消失後才移除結果。"
     else:
         latest = "Changes in 11.0.26\\nSelect local folders in search results by long press, including multi-select and select all. Delete the whole folder with non-image files, hidden entries and subfolders; confirm its removal before clearing results."
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = '11.0.27 更新\\n三种屏保入口都可选默认或自订裁切范围，输出使用屏保尺寸设置。裁切后的图片会永久保存，原厂导入使用额外副本。'
+    elif chinese:
+        latest = '11.0.27 更新\\n三種屏保入口都可選預設或自訂裁切範圍，輸出依屏保尺寸設定。裁切後的圖片會永久保存，原廠匯入使用額外副本。'
+    else:
+        latest = 'Changes in 11.0.27\\nChoose default or custom crops for all three screensaver actions. Export at the saved screensaver size, keep the PNG, and give the system importer a separate copy.'
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = '11.0.28 更新\\n新增「显示页码」开关，位于设置→检视→行为，默认关闭。开启后在看图底部中央显示当前页和总页数，例如07/50。'
+    elif chinese:
+        latest = '11.0.28 更新\\n新增「顯示頁碼」開關，位於設定→檢視→行為，預設關閉。開啟後在看圖底部中央顯示目前頁數與總頁數，例如07/50。'
+    else:
+        latest = 'Changes in 11.0.28\\nAdd Show page numbers under Settings → View → Behavior, off by default. Show the current position and total at the bottom center, for example 07/50.'
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
     strings.update({key: "" for key in RETIRED_STRINGS})

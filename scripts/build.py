@@ -16,8 +16,8 @@ BASE_SHA256 = "8a707e4285e22e668d50305864d05eb968ea584a56ec2d89e1ce50336fd5c605"
 RELEASE_BASE_SHA256 = "1eb348eab476fda8f4be42b64c438767d60a65daa61aebc9b6c818c0bdf10405"
 MAINTAINED_BASE_SHA256 = (RELEASE_BASE_SHA256, "62cd0745a358ff11c8f098f2cbe4d5cd7ecabfe0102a490a66b32d68cc613947", "f16bebaeb1e71a62668e7971a2c104f1760cf4ac42142a3f06cf6765950f44bf", "3f9e83b3f6e263a2e4e62dead7e1c50bf2b625681850aa206a1301fa369acab8")
 PACKAGE = "io.github.jason840709.quickpic"
-VERSION_NAME = "11.0.27"
-VERSION_CODE = 11027001
+VERSION_NAME = "11.0.28"
+VERSION_CODE = 11028001
 
 
 def sha(path):
@@ -141,6 +141,7 @@ def build(args):
     switches = importlib.import_module("patch_switches")
     eink = importlib.import_module("patch_eink_render")
     search_delete = importlib.import_module("patch_search_delete")
+    page_indicator = importlib.import_module("patch_page_indicator")
     with tempfile.TemporaryDirectory(prefix="quickpic-build-") as temporary:
         work = Path(temporary)
         decoded = work / "decoded"
@@ -169,6 +170,7 @@ def build(args):
         switches.patch(decoded)
         eink.patch(decoded)
         search_delete.patch(decoded)
+        page_indicator.patch(decoded)
         normalize.patch(decoded, package=args.package, version_name=VERSION_NAME,
                         version_code=VERSION_CODE, app_name="快圖")
         startup_links = links.check_hidden_default(decoded)
@@ -178,7 +180,7 @@ def build(args):
             source = smali.read_text()
             hooked = "\n".join(line for line in source.splitlines()
                 if any("Lcom/alensw/jni/" + helper + ";" in line for helper in
-                       ("SearchDelete", "MediaDates", "DateSort", "ScanPriority", "ScanPriority$Pending", "FolderPathUi", "MenuLayout", "ViewerControls", "FolderDelete", "FolderDelete$Result", "FileDelete", "FastMediaDelete", "MediaCleanup", "DeleteTiming", "DeleteTiming$Report", "ReaderMode", "ReaderMode$Host", "ReaderMode$Frame", "ScreensaverExport", "ScreensaverImage", "ScreensaverPreference", "ScreensaverPng", "BigmeScreensaver", "ScreensaverMenu", "ScreensaverOptions", "BooxScreensaver", "ScreensaverDevice", "EinkRender", "EinkDecode", "EinkResample", "EinkResample$Rows", "EinkPreference")) or "Lcom/alensw/jni/TapPage" in line or "->quickpic" in line)
+                       ("PageIndicator", "PageIndicator$State", "PageIndicator$Host", "SearchDelete", "MediaDates", "DateSort", "ScanPriority", "ScanPriority$Pending", "FolderPathUi", "MenuLayout", "ViewerControls", "FolderDelete", "FolderDelete$Result", "FileDelete", "FastMediaDelete", "MediaCleanup", "DeleteTiming", "DeleteTiming$Report", "ReaderMode", "ReaderMode$Host", "ReaderMode$Frame", "ScreensaverExport", "ScreensaverImage", "ScreensaverPreference", "ScreensaverPng", "BigmeScreensaver", "ScreensaverMenu", "ScreensaverOptions", "BooxScreensaver", "ScreensaverDevice", "EinkRender", "EinkDecode", "EinkResample", "EinkResample$Rows", "EinkPreference")) or "Lcom/alensw/jni/TapPage" in line or "->quickpic" in line)
             if hooked:
                 new_links.append(resolver.check(hooked))
         unsigned, aligned, signed = (work / name for name in ("unsigned.apk", "aligned.apk", "signed.apk"))
