@@ -1,0 +1,1 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="local.quickpic.crop27"><uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28"/><application android:label="Crop test"/><instrumentation android:name="local.quickpic.crop27.Probe" android:targetPackage="io.github.jason840709.quickpic"/></manifest>

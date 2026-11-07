@@ -214,6 +214,12 @@ def patch(decoded_root):
         elif text.count('android:key="screensaver_options"') != 1 or '<com.alensw.jni.ScreensaverOptions ' not in text:
             raise ValueError('Invalid existing screensaver options preference')
         staged[path] = text
+    manifest = root / 'AndroidManifest.xml'
+    text = manifest.read_text()
+    if 'com.alensw.jni.ScreensaverCropActivity' not in text:
+        text, count = re.subn(r'(<application\b[^>]*>)', lambda m: m[1] + '\n        <activity android:name="com.alensw.jni.ScreensaverCropActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:theme="@android:style/Theme.Material.Light.NoActionBar" />', text)
+        if count != 1: raise ValueError('Expected one application for internal crop activity')
+    staged[manifest] = text
     for path, text in staged.items(): path.write_text(text)
     return {'preference_variants': len(paths), 'entry': SIGNATURE, 'helper': 'ScreensaverExport',
             'default': [1860,2480], 'set_as_items': 4,

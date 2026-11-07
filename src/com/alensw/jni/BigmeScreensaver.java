@@ -65,27 +65,23 @@ public final class BigmeScreensaver {
             if (source == null || !new File(source).isFile() || !new File(source).canRead()) {
                 throw new IOException("來源圖片無法讀取");
             }
-            new AlertDialog.Builder(context)
-                .setTitle("設置為 B1051C 屏保")
-                .setMessage("將另存為 1860x2480 PNG 再交給系統套用")
-                .setNegativeButton("取消", null)
-                .setPositiveButton("確認", new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {
-                        start(context.getApplicationContext(), source, selected);
-                    }
-                }).show();
+            ScreensaverFlow.choose(context, source, 1);
         } catch (Exception error) {
             message(context, error.getMessage() == null ? "無法開啟屏保設定" : error.getMessage());
         }
     }
 
-    private static void start(final Context context, final String source, final Target selected) {
+    public static void applySaved(Context context, File saved, int width, int height) {
+        start(context, saved.getAbsolutePath(), null, new int[]{width,height});
+    }
+
+    private static void start(final Context context, final String source, final Target selected, final int[] size) {
         if (!ACTIVE.compareAndSet(false, true)) {
             message(context, "正在處理屏保圖片，請稍候"); return;
         }
         try {
             Thread worker = new Thread(new Runnable() {
-                @Override public void run() { apply(context, source, selected); }
+                @Override public void run() { apply(context, source, selected, size); }
             }, "QuickPic-StandbyImport");
             worker.setPriority(Thread.NORM_PRIORITY - 1);
             worker.start();
@@ -96,10 +92,10 @@ public final class BigmeScreensaver {
     }
 
     private static void apply(Context context, String source) {
-        apply(context, source, null);
+        apply(context, source, null, ScreensaverPreference.dimensions(context));
     }
 
-    private static void apply(Context context, String source, Target confirmed) {
+    private static void apply(Context context, String source, Target confirmed, int[] size) {
         boolean submitted = false;
         Uri media = null;
         ContentProviderClient client = null;
@@ -114,14 +110,14 @@ public final class BigmeScreensaver {
             File directory = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_PICTURES), "QuickPic-Standby-Import-" + context.getPackageName());
             noHiddenAncestors(directory);
-            File picture = ScreensaverImage.prepare(source, WIDTH, HEIGHT, directory, false);
-            validateImage(picture);
+            File picture = ScreensaverImportCopy.copy(new File(source), directory, size[0], size[1]);
+            validateImage(picture, size[0], size[1]);
             media = publish(context, picture);
             context.grantUriPermission(selected.packageName, media, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             // The importer needs a raw path. Media visibility/grant improves compatibility,
             // but does NOT prove another UID's raw-path access or atomic destination writes.
             target(context, selected, false);
-            validateImage(picture);
+            validateImage(picture, size[0], size[1]);
             if (new StatFs(Environment.getDataDirectory().getAbsolutePath()).getAvailableBytes()
                     < picture.length() + 64L * 1024 * 1024) {
                 throw new IOException("系統儲存空間不足，已停止套用");
@@ -211,14 +207,14 @@ public final class BigmeScreensaver {
         }
     }
 
-    private static void validateImage(File picture) throws IOException {
-        ScreensaverPng.verify(picture, WIDTH, HEIGHT, MAX_BYTES);
+    private static void validateImage(File picture, int width, int height) throws IOException {
+        ScreensaverPng.verify(picture, width, height, MAX_BYTES);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(picture.getAbsolutePath(), options);
         try {
-            if (bitmap == null || bitmap.getWidth() != WIDTH || bitmap.getHeight() != HEIGHT
+            if (bitmap == null || bitmap.getWidth() != width || bitmap.getHeight() != height
                     || bitmap.hasAlpha()) throw new IOException("屏保 PNG 無法完整解碼");
         } finally { if (bitmap != null) bitmap.recycle(); }
     }

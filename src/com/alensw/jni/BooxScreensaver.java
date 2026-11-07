@@ -96,68 +96,19 @@ public final class BooxScreensaver {
             message(context, "無法讀取這張圖片");
             return;
         }
-        try {
-            new AlertDialog.Builder(context)
-                    .setTitle("設置為文石屏保")
-                    .setMessage("將以這張圖片取代目前的屏保圖片。")
-                    .setNegativeButton("取消", null)
-                    .setPositiveButton("確認", new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {
-                            Context app = context.getApplicationContext();
-                            start(app == null ? context : app, source);
-                        }
-                    }).show();
-        } catch (RuntimeException unavailable) {
-            Log.e(TAG, "Cannot open screensaver confirmation", unavailable);
-            message(context, "無法開啟屏保設定");
-        }
+        ScreensaverFlow.choose(context, source, 2);
     }
 
-    private static void start(final Context context, final String source) {
-        if (!ACTIVE.compareAndSet(false, true)) return;
-        try {
-            // This runs on the dialog's main thread, before the worker starts.
-            cancelProgress();
-            currentToast = Toast.makeText(context, "正在處理圖片…", Toast.LENGTH_SHORT);
-            currentToast.show();
-            Thread worker = new Thread(new Runnable() {
-                @Override public void run() { prepare(context, source); }
-            }, "QuickPic-BooxScreensaver");
-            worker.setPriority(Thread.NORM_PRIORITY - 1);
-            worker.start();
-        } catch (RuntimeException error) {
-            ACTIVE.set(false);
-            cancelProgress();
-            message(context, "無法啟動圖片處理");
-        } catch (OutOfMemoryError error) {
-            ACTIVE.set(false);
-            cancelProgress();
-            message(context, "記憶體不足，無法處理圖片");
-        }
-    }
-
-    private static void prepare(final Context context, String source) {
-        try {
-            if (!supports(context)) throw new IOException("OEM unavailable");
-            if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-                throw new IOException("Shared storage unavailable");
-            }
-            int[] size = ScreensaverPreference.dimensions(context);
-            // OEM uses public Pictures + basename. Preparing there avoids another copy
-            // and the OEM's skip-existing-basename branch. UUID names preserve originals.
-            File directory = Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_PICTURES);
-            final File picture = ScreensaverImage.prepare(source, size[0], size[1],
-                    directory, false);
-            validate(picture, size[0], size[1]);
-            main().post(new Runnable() {
-                @Override public void run() { dispatch(context, picture); }
-            });
-        } catch (OutOfMemoryError error) {
-            failed(context, "記憶體不足，無法處理圖片", error);
-        } catch (Exception error) {
-            failed(context, "無法製作屏保圖片", error);
-        }
+    public static void applySaved(final Context context, final File saved, final int width, final int height) {
+        if(!ACTIVE.compareAndSet(false,true))return;
+        new Thread(()->{
+            try {
+                if(!supports(context))throw new IOException("OEM unavailable");
+                validate(saved,width,height);
+                main().post(()->dispatch(context,saved));
+            } catch(Exception error) { failed(context,"無法設定文石屏保，PNG 已保留",error); }
+              catch(OutOfMemoryError error) { failed(context,"記憶體不足，PNG 已保留",error); }
+        },"QuickPic-BooxScreensaver").start();
     }
 
     private static void validate(File picture, int width, int height) throws IOException {

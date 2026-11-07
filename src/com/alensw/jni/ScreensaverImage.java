@@ -41,7 +41,7 @@ public final class ScreensaverImage {
         public final double width;
         public final double height;
 
-        private Crop(double left, double top, double width, double height) {
+        public Crop(double left, double top, double width, double height) {
             this.left = left;
             this.top = top;
             this.width = width;
@@ -78,6 +78,11 @@ public final class ScreensaverImage {
     /** OEM import copies must be visible to the platform media provider. */
     public static File prepare(String path, int width, int height, File outputDirectory,
             boolean excludeFromMedia) throws IOException {
+        return prepare(path, width, height, outputDirectory, excludeFromMedia, null);
+    }
+
+    public static File prepare(String path, int width, int height, File outputDirectory,
+            boolean excludeFromMedia, Crop selection) throws IOException {
         if (!validSize(width, height)) {
             throw new IOException("尺寸須為 1～8192 像素，總像素不可超過 3200 萬");
         }
@@ -97,10 +102,11 @@ public final class ScreensaverImage {
         int rawHeight = bounds.outHeight;
         int orientation = readOrientation(source.getAbsolutePath());
         boolean swap = orientation >= 5 && orientation <= 8;
-        Crop uprightCrop = centeredCrop(swap ? rawHeight : rawWidth,
-                swap ? rawWidth : rawHeight, width, height);
-        Crop rawCrop = centeredCrop(rawWidth, rawHeight,
-                swap ? height : width, swap ? width : height);
+        int uprightWidth = swap ? rawHeight : rawWidth;
+        int uprightHeight = swap ? rawWidth : rawHeight;
+        Crop uprightCrop = selection == null ? centeredCrop(uprightWidth, uprightHeight, width, height)
+                : checkedCrop(selection, uprightWidth, uprightHeight, width, height);
+        Crop rawCrop = rawCrop(uprightCrop, rawWidth, rawHeight, orientation);
         Rect region = enclosing(rawCrop, rawWidth, rawHeight);
         int sample = decodeSample(rawCrop, swap ? height : width, swap ? width : height);
 
@@ -158,7 +164,33 @@ public final class ScreensaverImage {
         }
     }
 
-    private static int readOrientation(String path) {
+    private static boolean finite(double v) { return !Double.isNaN(v) && !Double.isInfinite(v); }
+
+    public static Crop checkedCrop(Crop c, int sw, int sh, int w, int h) throws IOException {
+        if (c == null || !finite(c.left) || !finite(c.top)
+                || !finite(c.width) || !finite(c.height)
+                || c.left < 0 || c.top < 0 || c.width <= 0 || c.height <= 0
+                || c.left + c.width > sw + 0.001 || c.top + c.height > sh + 0.001
+                || Math.abs(c.width / c.height - (double)w / h) > 0.0001)
+            throw new IOException("裁切範圍無效，請重新選取");
+        return c;
+    }
+
+    static Crop rawCrop(Crop c, int rw, int rh, int o) {
+        double l=c.left, t=c.top, w=c.width, h=c.height;
+        switch(o) {
+            case 2:return new Crop(rw-l-w,t,w,h);
+            case 3:return new Crop(rw-l-w,rh-t-h,w,h);
+            case 4:return new Crop(l,rh-t-h,w,h);
+            case 5:return new Crop(t,l,h,w);
+            case 6:return new Crop(t,rh-l-w,h,w);
+            case 7:return new Crop(rw-t-h,rh-l-w,h,w);
+            case 8:return new Crop(rw-t-h,l,h,w);
+            default:return c;
+        }
+    }
+
+    public static int readOrientation(String path) {
         try {
             int orientation = new ExifInterface(path).getAttributeInt(
                     ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
