@@ -23,7 +23,7 @@ LATEST_CONTENT = "jason_history_latest_content"
 ARCHIVE_TITLE = "jason_history_archive_title"
 NEW_HISTORY_STRINGS = {LATEST_TITLE, LATEST_CONTENT, ARCHIVE_TITLE}
 CONSOLIDATED_VERSIONS = {"11.0." + str(v) for v in range(7, 14)}
-HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25", "11.0.26", "11.0.27", "11.0.28")
+HISTORY_VERSIONS = tuple("11.0." + str(v) for v in range(7)) + ("11.0.13", "11.0.14", "11.0.16", "11.0.18", "11.0.19", "11.0.20", "11.0.21", "11.0.22", "11.0.23", "11.0.24", "11.0.25", "11.0.26", "11.0.27", "11.0.28", "11.0.29")
 CREDIT_TITLES = {
     "@string/caio_name", "@string/pm_name", "@string/oldosfan_name",
     "@string/vega_name", "@string/thebear_name", "@string/app_translator",
@@ -158,7 +158,7 @@ def replacement_strings(path):
     simplified = path.parent.name in ("values-zh", "values-zh-rCN")
     strings = {
         "app_name_full": "QuickPic Gallery Mod II",
-        "version_number": "11.0.28",
+        "version_number": "11.0.29",
         "build_type": "Jason Chen",
         "wstxda": "Jason Chen",
         "github_url": REPO + "/blob/main/README.md",
@@ -345,6 +345,14 @@ def replacement_strings(path):
         latest = 'Changes in 11.0.28\\nAdd Show page numbers under Settings → View → Behavior, off by default. Show the current position and total at the bottom center, for example 07/50.'
     strings[LATEST_CONTENT] = latest
     strings["eink_features_content"] += "\\n\\n" + latest
+    if simplified:
+        latest = '11.0.29 更新\\n安全性新增「启动时自动显示隐藏项目」开关，默认开启。关闭后启动时隐藏，仍可从选单手动切换。'
+    elif chinese:
+        latest = '11.0.29 更新\\n安全性新增「啟動時自動顯示隱藏項目」開關，預設開啟。關閉後啟動時隱藏，仍可從選單手動切換。'
+    else:
+        latest = 'Changes in 11.0.29\\nAdd Show hidden items at startup under Security, on by default. Turn it off to start with hidden items concealed; manual menu control remains available.'
+    strings[LATEST_CONTENT] = latest
+    strings["eink_features_content"] += '\\n\\n' + latest
     strings.update({key: "" for key in RETIRED_STRINGS})
     return strings
 

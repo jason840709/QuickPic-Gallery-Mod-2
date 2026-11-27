@@ -16,7 +16,7 @@ QuickPic Gallery Mod II is an Android gallery maintained by Jason Chen. It build
 - Settings switches use distinct on/off backgrounds and a small check mark in the thumb when enabled.
 - Screensaver size and menu visibility are grouped under Settings → View → Screensaver settings.
 - Edit included and excluded folder paths directly to choose where the gallery looks for images.
-- Hidden items are shown by default when the app opens; existing password protection still applies.
+- Choose whether to show hidden items at startup under Settings → Security, on by default. Manual visibility controls and existing password protection remain available.
 
 ### Slideshows and display intervals
 
